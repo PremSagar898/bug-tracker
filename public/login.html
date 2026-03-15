@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — BugTracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{--ind:#4f46e5;--grn:#10b981;--red:#ef4444;--amb:#f59e0b;}
+body{font-family:'DM Sans',sans-serif;min-height:100vh;background:linear-gradient(135deg,#f0f1ff 0%,#f0fdf8 50%,#fffbeb 100%);display:flex;align-items:center;justify-content:center;padding:20px;}
+.card{background:#fff;border-radius:22px;padding:38px;width:440px;max-width:100%;box-shadow:0 24px 64px rgba(0,0,0,.1);border:1.5px solid #e8eaff;}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center;}
+.logo-ico{width:40px;height:40px;background:var(--ind);border-radius:11px;display:flex;align-items:center;justify-content:center;}
+.logo-ico svg{width:20px;height:20px;color:#fff;}
+.logo-txt{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#111827;}
+.logo-txt span{color:var(--ind);}
+.tabs{display:flex;background:#f4f5fb;border-radius:12px;padding:4px;margin-bottom:26px;}
+.tab{flex:1;text-align:center;padding:9px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;color:#6b7280;transition:.18s;border:none;background:none;font-family:'DM Sans',sans-serif;}
+.tab:hover{color:#111827;}
+.tab.on{background:#fff;color:var(--ind);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.fl{display:block;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:#6b7280;margin-bottom:7px;}
+.inp{width:100%;background:#f8f9ff;border:1.5px solid #e8eaff;border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:13px;color:#111827;outline:none;margin-bottom:14px;transition:.2s;}
+.inp:focus{border-color:var(--ind);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+.inp::placeholder{color:#9ca3af;}
+.role-lbl{display:block;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:#6b7280;margin-bottom:10px;}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;}
+.role-opt{border:1.5px solid #e8eaff;border-radius:11px;padding:12px 6px;text-align:center;cursor:pointer;transition:.2s;background:#f8f9ff;}
+.role-opt:hover{border-color:var(--ind);background:#eef2ff;}
+.role-opt.sel{border-color:var(--ind);background:#eef2ff;box-shadow:0 0 0 3px rgba(79,70,229,.12);}
+.role-opt.sel-tester{border-color:var(--amb);background:#fffbeb;box-shadow:0 0 0 3px rgba(245,158,11,.12);}
+.role-opt.sel-developer{border-color:var(--grn);background:#ecfdf5;box-shadow:0 0 0 3px rgba(16,185,129,.12);}
+.role-ico{width:34px;height:34px;border-radius:9px;margin:0 auto 7px;display:flex;align-items:center;justify-content:center;}
+.role-ico svg{width:16px;height:16px;}
+.role-name{font-size:12px;font-weight:700;color:#374151;}
+.btn{width:100%;padding:12px;background:var(--ind);color:#fff;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(79,70,229,.3);transition:.2s;margin-top:2px;}
+.btn:hover{background:#4338ca;transform:translateY(-1px);}
+.btn:active{transform:none;}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.msg{border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;}
+.msg.err{background:#fef2f2;border:1.5px solid #fecaca;color:#dc2626;}
+.msg.ok{background:#ecfdf5;border:1.5px solid #bbf7d0;color:#059669;}
+
+/* OTP step */
+.otp-box{text-align:center;padding:8px 0 16px;}
+.otp-icon{width:56px;height:56px;background:#eef2ff;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.otp-icon svg{width:26px;height:26px;color:var(--ind);}
+.otp-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;margin-bottom:6px;}
+.otp-sub{font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.5;}
+.otp-sub strong{color:#111827;}
+.otp-inputs{display:flex;gap:8px;justify-content:center;margin-bottom:18px;}
+.otp-inp{width:46px;height:52px;border:1.5px solid #e8eaff;border-radius:10px;text-align:center;font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#111827;background:#f8f9ff;outline:none;transition:.2s;}
+.otp-inp:focus{border-color:var(--ind);background:#fff;box-shadow:0 0 0 3px rgba(79,70,229,.1);}
+.resend-row{font-size:12.5px;color:#6b7280;margin-top:12px;}
+.resend-btn{color:var(--ind);font-weight:600;cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:12.5px;}
+.resend-btn:hover{text-decoration:underline;}
+.resend-btn:disabled{color:#9ca3af;cursor:not-allowed;text-decoration:none;}
+.back-btn{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;margin-bottom:18px;}
+.back-btn:hover{color:#111827;}
+.back-btn svg{width:14px;height:14px;}
+.timer{font-family:'DM Mono',monospace;font-size:12px;color:var(--ind);font-weight:600;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <span class="logo-txt">Bug<span>Tracker</span></span>
+  </div>
+
+  <div class="tabs" id="tabsRow">
+    <button class="tab on" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+    <button class="tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <!-- ── SIGN IN ── -->
+  <div id="form-signin">
+    <label class="fl">Email</label>
+    <input class="inp" id="si-email" type="email" placeholder="you@example.com">
+    <label class="fl">Password</label>
+    <input class="inp" id="si-pass" type="password" placeholder="••••••••">
+    <button class="btn" onclick="doLogin()">Sign In →</button>
+  </div>
+
+  <!-- ── SIGN UP STEP 1: Fill details ── -->
+  <div id="form-signup" style="display:none;">
+    <label class="fl">Full Name</label>
+    <input class="inp" id="su-name" type="text" placeholder="e.g. John Smith">
+    <label class="fl">Email</label>
+    <input class="inp" id="su-email" type="email" placeholder="you@example.com">
+    <label class="fl">Password</label>
+    <input class="inp" id="su-pass" type="password" placeholder="Min 8 characters">
+    <span class="role-lbl">Select Your Role</span>
+    <div class="role-grid">
+      <div class="role-opt" id="ro-tester" onclick="selRole('tester')">
+        <div class="role-ico" style="background:#fffbeb;color:#d97706;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <div class="role-name">Tester</div>
+      </div>
+      <div class="role-opt" id="ro-developer" onclick="selRole('developer')">
+        <div class="role-ico" style="background:#ecfdf5;color:#059669;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="role-name">Developer</div>
+      </div>
+      <div class="role-opt" id="ro-admin" onclick="selRole('admin')">
+        <div class="role-ico" style="background:#eef2ff;color:#4f46e5;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="role-name">Admin</div>
+      </div>
+    </div>
+    <button class="btn" id="sendOtpBtn" style="background:var(--grn);box-shadow:0 4px 14px rgba(16,185,129,.3);" onclick="sendOTP()">Send Verification Code →</button>
+  </div>
+
+  <!-- ── SIGN UP STEP 2: Enter OTP ── -->
+  <div id="form-otp" style="display:none;">
+    <button class="back-btn" onclick="backToSignup()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="otp-box">
+      <div class="otp-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
+      </div>
+      <div class="otp-title">Check your email</div>
+      <div class="otp-sub">We sent a 6-digit code to<br><strong id="otp-email-display"></strong></div>
+      <div class="otp-inputs">
+        <input class="otp-inp" id="otp1" maxlength="1" type="text" inputmode="numeric">
+        <input class="otp-inp" id="otp2" maxlength="1" type="text" inputmode="numeric">
+        <input class="otp-inp" id="otp3" maxlength="1" type="text" inputmode="numeric">
+        <input class="otp-inp" id="otp4" maxlength="1" type="text" inputmode="numeric">
+        <input class="otp-inp" id="otp5" maxlength="1" type="text" inputmode="numeric">
+        <input class="otp-inp" id="otp6" maxlength="1" type="text" inputmode="numeric">
+      </div>
+      <button class="btn" id="verifyBtn" onclick="verifyOTP()">Verify & Create Account</button>
+      <div class="resend-row">
+        Didn't receive it?
+        <button class="resend-btn" id="resendBtn" onclick="resendOTP()" disabled>Resend code</button>
+        <span class="timer" id="timerDisplay"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = '/api';
+var selectedRole = '';
+var pendingUser = {};
+var resendTimer = null;
+
+// ── Already logged in ──
+(function(){
+  var s = localStorage.getItem('bt_session');
+  if(s){ redirectTo(JSON.parse(s).role); }
+})();
+window.addEventListener('pageshow', function(e){
+  if(e.persisted){
+    var s = localStorage.getItem('bt_session');
+    if(s) redirectTo(JSON.parse(s).role);
+  }
+});
+
+// ── TABS ──
+function switchTab(t){
+  document.getElementById('tab-signin').classList.toggle('on', t==='signin');
+  document.getElementById('tab-signup').classList.toggle('on', t==='signup');
+  document.getElementById('form-signin').style.display = t==='signin' ? 'block' : 'none';
+  document.getElementById('form-signup').style.display = t==='signup' ? 'block' : 'none';
+  document.getElementById('form-otp').style.display = 'none';
+  document.getElementById('tabsRow').style.display = 'flex';
+  hideMsg();
+}
+
+function selRole(role){
+  selectedRole = role;
+  ['tester','developer','admin'].forEach(function(r){
+    document.getElementById('ro-'+r).className = 'role-opt'+(r===role?' sel sel-'+role:'');
+  });
+}
+
+function showMsg(text, type){
+  var el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg '+type;
+  el.style.display = 'block';
+}
+function hideMsg(){ document.getElementById('msg').style.display = 'none'; }
+
+function redirectTo(role){
+  var pages = {admin:'admin.html', tester:'tester.html', developer:'developer.html'};
+  window.location.replace(pages[role]||'login.html');
+}
+
+// ── SIGN IN ──
+async function doLogin(){
+  hideMsg();
+  var email = document.getElementById('si-email').value.trim();
+  var pass  = document.getElementById('si-pass').value;
+  if(!email||!pass){ showMsg('Please enter your email and password.','err'); return; }
+  try {
+    var res = await fetch(API+'/auth/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, password:pass})
+    });
+    var data = await res.json();
+    if(!res.ok){ showMsg(data.message,'err'); return; }
+    localStorage.setItem('bt_token', data.token);
+    localStorage.setItem('bt_session', JSON.stringify(data.user));
+    redirectTo(data.user.role);
+  } catch(e){
+    showMsg('Server error. Please try again.','err');
+  }
+}
+
+// ── SEND OTP ──
+async function sendOTP(){
+  hideMsg();
+  var name  = document.getElementById('su-name').value.trim();
+  var email = document.getElementById('su-email').value.trim();
+  var pass  = document.getElementById('su-pass').value;
+
+  if(!name)             { showMsg('Please enter your full name.','err'); return; }
+  if(!email)            { showMsg('Please enter your email.','err'); return; }
+  if(pass.length < 8)   { showMsg('Password must be at least 8 characters.','err'); return; }
+  if(!selectedRole)     { showMsg('Please select a role.','err'); return; }
+
+  var btn = document.getElementById('sendOtpBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    var res = await fetch(API+'/auth/send-otp',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, name})
+    });
+    var data = await res.json();
+    if(!res.ok){ showMsg(data.message||'Failed to send OTP.','err'); btn.disabled=false; btn.textContent='Send Verification Code →'; return; }
+
+    // Save pending user data
+    pendingUser = {name, email, password:pass, role:selectedRole};
+
+    // Show OTP step
+    document.getElementById('form-signup').style.display = 'none';
+    document.getElementById('form-otp').style.display = 'block';
+    document.getElementById('tabsRow').style.display = 'none';
+    document.getElementById('otp-email-display').textContent = email;
+    hideMsg();
+
+    // Focus first OTP input
+    document.getElementById('otp1').focus();
+
+    // Start resend timer
+    startResendTimer(60);
+
+  } catch(e){
+    showMsg('Server error. Please try again.','err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Verification Code →';
+  }
+}
+
+// ── VERIFY OTP ──
+async function verifyOTP(){
+  hideMsg();
+  var otp = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(function(id){
+    return document.getElementById(id).value;
+  }).join('');
+
+  if(otp.length < 6){ showMsg('Please enter the complete 6-digit code.','err'); return; }
+
+  var btn = document.getElementById('verifyBtn');
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+
+  try {
+    var res = await fetch(API+'/auth/verify-otp',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        email: pendingUser.email,
+        otp: otp,
+        name: pendingUser.name,
+        password: pendingUser.password,
+        role: pendingUser.role
+      })
+    });
+    var data = await res.json();
+    if(!res.ok){ showMsg(data.message||'Invalid or expired code.','err'); btn.disabled=false; btn.textContent='Verify & Create Account'; return; }
+
+    localStorage.setItem('bt_token', data.token);
+    localStorage.setItem('bt_session', JSON.stringify(data.user));
+    showMsg('Account created! Redirecting…','ok');
+    setTimeout(function(){ redirectTo(data.user.role); }, 900);
+
+  } catch(e){
+    showMsg('Server error. Please try again.','err');
+    btn.disabled = false;
+    btn.textContent = 'Verify & Create Account';
+  }
+}
+
+// ── RESEND OTP ──
+async function resendOTP(){
+  hideMsg();
+  document.getElementById('resendBtn').disabled = true;
+  try {
+    var res = await fetch(API+'/auth/send-otp',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email:pendingUser.email, name:pendingUser.name})
+    });
+    var data = await res.json();
+    if(!res.ok){ showMsg(data.message||'Failed to resend.','err'); return; }
+    showMsg('New code sent to '+pendingUser.email,'ok');
+    clearOTPInputs();
+    startResendTimer(60);
+  } catch(e){
+    showMsg('Server error. Please try again.','err');
+  }
+}
+
+// ── BACK TO SIGNUP ──
+function backToSignup(){
+  document.getElementById('form-otp').style.display = 'none';
+  document.getElementById('form-signup').style.display = 'block';
+  document.getElementById('tabsRow').style.display = 'flex';
+  clearOTPInputs();
+  hideMsg();
+  if(resendTimer) clearInterval(resendTimer);
+}
+
+// ── TIMER ──
+function startResendTimer(seconds){
+  var remaining = seconds;
+  var btn = document.getElementById('resendBtn');
+  var display = document.getElementById('timerDisplay');
+  btn.disabled = true;
+  display.textContent = '('+remaining+'s)';
+  if(resendTimer) clearInterval(resendTimer);
+  resendTimer = setInterval(function(){
+    remaining--;
+    if(remaining <= 0){
+      clearInterval(resendTimer);
+      btn.disabled = false;
+      display.textContent = '';
+    } else {
+      display.textContent = '('+remaining+'s)';
+    }
+  }, 1000);
+}
+
+// ── OTP INPUT AUTO-ADVANCE ──
+['otp1','otp2','otp3','otp4','otp5','otp6'].forEach(function(id, i, arr){
+  var el = document.getElementById(id);
+  el.addEventListener('input', function(){
+    this.value = this.value.replace(/[^0-9]/g,'');
+    if(this.value && i < arr.length-1){
+      document.getElementById(arr[i+1]).focus();
+    }
+    // Auto verify when all 6 filled
+    var otp = arr.map(function(x){return document.getElementById(x).value;}).join('');
+    if(otp.length===6) verifyOTP();
+  });
+  el.addEventListener('keydown', function(e){
+    if(e.key==='Backspace' && !this.value && i > 0){
+      document.getElementById(arr[i-1]).focus();
+    }
+  });
+  el.addEventListener('paste', function(e){
+    e.preventDefault();
+    var text = (e.clipboardData||window.clipboardData).getData('text').replace(/[^0-9]/g,'').slice(0,6);
+    arr.forEach(function(x, j){ document.getElementById(x).value = text[j]||''; });
+    if(text.length===6) verifyOTP();
+  });
+});
+
+function clearOTPInputs(){
+  ['otp1','otp2','otp3','otp4','otp5','otp6'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+}
+
+// ── ENTER KEY ──
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Enter') return;
+  var signupVisible = document.getElementById('form-signup').style.display !== 'none';
+  var otpVisible    = document.getElementById('form-otp').style.display !== 'none';
+  if(otpVisible)    verifyOTP();
+  else if(signupVisible) sendOTP();
+  else doLogin();
+});
+</script>
+</body>
+</html>

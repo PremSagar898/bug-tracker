@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — BugTracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --sw:240px;--nh:64px;
+  --bg:#f4f5fb;--w:#fff;
+  --bdr:#e8eaff;--bdr2:#f0f1fa;
+  --ind:#4f46e5;--ind-l:#eef2ff;--ind-d:#4338ca;
+  --tx:#111827;--tx2:#6b7280;--tx3:#9ca3af;
+  --red:#ef4444;--amb:#f59e0b;--grn:#10b981;--pur:#8b5cf6;
+  --sb:#1e1b4b;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
+.topnav{position:fixed;top:0;left:0;right:0;height:var(--nh);background:var(--w);border-bottom:1.5px solid var(--bdr);display:flex;align-items:center;padding:0 20px 0 0;z-index:300;gap:10px;}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;width:var(--sw);padding:0 18px;border-right:1.5px solid var(--bdr);height:100%;flex-shrink:0;}
+.logo-i{width:34px;height:34px;background:var(--ind);border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.logo-i svg{width:17px;height:17px;color:#fff;}
+.logo-t{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--tx);}
+.logo-t span{color:var(--ind);}
+.spacer{flex:1;}
+.srch-wrap{position:relative;}
+.srch{display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;padding:8px 13px;width:230px;transition:.2s;}
+.srch:focus-within{border-color:var(--ind);background:var(--w);}
+.srch svg{width:14px;height:14px;color:var(--tx3);flex-shrink:0;}
+.srch input{background:none;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);width:100%;}
+.srch input::placeholder{color:var(--tx3);}
+.srch-drop{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--w);border:1.5px solid var(--bdr);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.1);z-index:500;max-height:280px;overflow-y:auto;}
+.srch-drop.open{display:block;}
+.sd-row{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bdr2);transition:.12s;}
+.sd-row:last-child{border-bottom:none;}
+.sd-row:hover{background:var(--ind-l);}
+.sd-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--ind);min-width:82px;font-weight:500;}
+.sd-ttl{font-size:12.5px;color:var(--tx);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sd-nil{padding:16px;text-align:center;font-size:13px;color:var(--tx3);}
+.ntf-wrap{position:relative;}
+.ntf-btn{width:38px;height:38px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex-shrink:0;}
+.ntf-btn:hover{background:var(--ind-l);border-color:var(--ind);}
+.ntf-btn svg{width:16px;height:16px;color:var(--tx2);}
+.ntf-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;background:var(--red);border-radius:9px;border:2px solid var(--w);display:none;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;padding:0 3px;font-family:'DM Mono',monospace;}
+.ntf-badge.on{display:flex;}
+.ntf-panel{display:none;position:absolute;top:calc(100% + 10px);right:0;width:340px;background:var(--w);border:1.5px solid var(--bdr);border-radius:14px;box-shadow:0 16px 44px rgba(0,0,0,.13);z-index:500;overflow:hidden;}
+.ntf-panel.open{display:block;animation:fd .18s ease both;}
+@keyframes fd{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.ntf-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--bdr2);}
+.ntf-head-t{font-size:13.5px;font-weight:700;}
+.ntf-clear{background:none;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--ind);cursor:pointer;}
+.ntf-clear:hover{text-decoration:underline;}
+.ntf-scroll{max-height:300px;overflow-y:auto;}
+.ntf-row{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid var(--bdr2);cursor:pointer;transition:.12s;}
+.ntf-row:last-child{border-bottom:none;}
+.ntf-row:hover{background:var(--ind-l);}
+.ntf-row.unread{background:#f8f9ff;}
+.ntf-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ntf-ico svg{width:13px;height:13px;}
+.ntf-msg{font-size:12.5px;color:var(--tx2);line-height:1.45;flex:1;}
+.ntf-msg b{color:var(--tx);font-weight:600;}
+.ntf-when{font-size:10.5px;color:var(--tx3);margin-top:2px;}
+.ntf-dot{width:7px;height:7px;background:var(--ind);border-radius:50%;margin-top:5px;flex-shrink:0;}
+.ntf-nil{padding:22px;text-align:center;font-size:13px;color:var(--tx3);}
+.chip{display:flex;align-items:center;gap:9px;padding:5px 11px 5px 5px;border-radius:11px;border:1.5px solid var(--bdr);background:var(--w);transition:.2s;}
+.chip:hover{background:var(--ind-l);}
+.av{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:'DM Mono',monospace;flex-shrink:0;}
+.av-admin{background:linear-gradient(135deg,#4f46e5,#7c3aed);}
+.av-tester{background:linear-gradient(135deg,#f59e0b,#ef4444);}
+.av-dev{background:linear-gradient(135deg,#10b981,#059669);}
+.un{font-size:13px;font-weight:600;color:var(--tx);}
+.ur{font-size:11px;color:var(--tx3);}
+.rb-admin{font-size:10px;font-weight:700;padding:3px 9px;border-radius:50px;background:var(--ind-l);color:var(--ind);font-family:'DM Mono',monospace;}
+.lo-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#fef2f2;border:1.5px solid #fecaca;color:var(--red);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:.2s;}
+.lo-btn:hover{background:#fee2e2;}
+.lo-btn svg{width:14px;height:14px;}
+.sidebar{position:fixed;top:var(--nh);left:0;width:var(--sw);height:calc(100vh - var(--nh));background:var(--sb);padding:18px 12px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+.sl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:#4a4880;padding:10px 10px 4px;}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;text-decoration:none;color:#a5b4fc;font-size:13.5px;font-weight:500;transition:.16s;user-select:none;}
+.ni:hover{background:#2e2a6e;color:#fff;}
+.ni.on{background:var(--ind);color:#fff;font-weight:600;}
+.ni svg{width:15px;height:15px;flex-shrink:0;}
+.nb{margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:50px;background:rgba(239,68,68,.22);color:#fca5a5;}
+.ni.on .nb{background:rgba(255,255,255,.2);color:#fff;}
+.sf{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.06);}
+.sf .ni{color:#4a4880;}
+.main{margin-left:var(--sw);margin-top:var(--nh);padding:26px 26px 52px;}
+.view{animation:fu .3s ease both;}
+@keyframes fu{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;}
+.ph-t{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.4px;}
+.ph-s{font-size:12.5px;color:var(--tx3);margin-top:3px;}
+.btn-row{display:flex;gap:9px;}
+.btn-p{display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--ind);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(79,70,229,.28);transition:.2s;}
+.btn-p:hover{background:var(--ind-d);}
+.btn-p svg{width:14px;height:14px;}
+.btn-s{display:flex;align-items:center;gap:6px;padding:9px 14px;background:var(--w);color:var(--tx2);border:1.5px solid var(--bdr);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
+.btn-s:hover{background:var(--ind-l);color:var(--ind);border-color:var(--ind);}
+.btn-s svg{width:14px;height:14px;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px;}
+.sc{background:var(--w);border-radius:16px;padding:20px;border:1.5px solid var(--bdr);position:relative;overflow:hidden;transition:.22s;}
+.sc:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.08);}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;}
+.sc.s-tot::before{background:linear-gradient(90deg,#4f46e5,#818cf8);}
+.sc.s-open::before{background:linear-gradient(90deg,#ef4444,#f87171);}
+.sc.s-prog::before{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+.sc.s-res::before{background:linear-gradient(90deg,#10b981,#34d399);}
+.sc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.sc-ico{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;}
+.sc-ico svg{width:20px;height:20px;}
+.sc.s-tot .sc-ico{background:var(--ind-l);color:var(--ind);}
+.sc.s-open .sc-ico{background:#fef2f2;color:var(--red);}
+.sc.s-prog .sc-ico{background:#fffbeb;color:var(--amb);}
+.sc.s-res  .sc-ico{background:#ecfdf5;color:var(--grn);}
+.sc-v{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--tx);letter-spacing:-1px;line-height:1;}
+.sc-l{font-size:12px;color:var(--tx3);margin-top:4px;font-weight:500;}
+.sc-bar{height:3px;background:#eef0fa;border-radius:3px;margin-top:16px;overflow:hidden;}
+.sc-fill{height:100%;border-radius:3px;}
+.sc.s-tot  .sc-fill{background:var(--ind);}
+.sc.s-open .sc-fill{background:var(--red);}
+.sc.s-prog .sc-fill{background:var(--amb);}
+.sc.s-res  .sc-fill{background:var(--grn);}
+.panel{background:var(--w);border-radius:16px;border:1.5px solid var(--bdr);overflow:hidden;margin-bottom:16px;}
+.panel-h{padding:15px 20px;border-bottom:1px solid var(--bdr2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.panel-t{font-size:14px;font-weight:700;}
+.panel-s{font-size:11.5px;color:var(--tx3);margin-top:2px;}
+.va{font-size:12px;color:var(--ind);font-weight:600;cursor:pointer;text-decoration:none;}
+.va:hover{text-decoration:underline;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:600px;}
+thead th{padding:10px 16px;text-align:left;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.7px;text-transform:uppercase;color:var(--tx3);background:#fafbff;border-bottom:1.5px solid var(--bdr);}
+tbody tr{transition:.15s;}
+tbody tr:hover{background:#fafbff;}
+tbody td{padding:11px 16px;font-size:13px;color:var(--tx2);border-bottom:1px solid var(--bdr2);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+.td-m{color:var(--tx);font-weight:600;}
+.tid{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--ind);font-weight:500;white-space:nowrap;}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:50px;font-size:11px;font-weight:600;white-space:nowrap;}
+.b-open{background:#fef2f2;color:#ef4444;}
+.b-prog{background:#fffbeb;color:#d97706;}
+.b-test{background:#ede9fe;color:#7c3aed;}
+.b-res{background:#ecfdf5;color:#059669;}
+.b-crit{background:#fef2f2;color:#dc2626;}
+.b-high{background:#fff7ed;color:#ea580c;}
+.b-med{background:#fefce8;color:#ca8a04;}
+.b-low{background:#f0fdf4;color:#16a34a;}
+.b-new{background:var(--ind-l);color:var(--ind);}
+.b-una{background:#f3f4f6;color:#6b7280;}
+.act-btn{display:inline-flex;align-items:center;gap:4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;cursor:pointer;border:none;transition:.15s;}
+.ab-view{background:var(--ind-l);color:var(--ind);}
+.ab-view:hover{background:#e0e7ff;}
+.ab-assign{background:#ecfdf5;color:#059669;}
+.ab-assign:hover{background:#d1fae5;}
+.ab-resolve{background:#fffbeb;color:#d97706;}
+.ab-resolve:hover{background:#fef3c7;}
+.act-list{padding:6px 18px 14px;}
+.ai{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--bdr2);}
+.ai:last-child{border-bottom:none;}
+.ai-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ai-ico svg{width:14px;height:14px;}
+.ai-txt{font-size:12.5px;color:var(--tx2);line-height:1.45;flex:1;}
+.ai-txt strong{color:var(--tx);font-weight:600;}
+.ai-time{font-size:11px;color:var(--tx3);margin-top:1px;}
+.inbox-item{display:flex;align-items:flex-start;gap:11px;padding:12px 18px;border-bottom:1px solid var(--bdr2);transition:.12s;}
+.inbox-item:last-child{border-bottom:none;}
+.inbox-item:hover{background:#fafbff;}
+.inbox-av{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;flex-shrink:0;}
+.inbox-txt{font-size:12.5px;color:var(--tx2);line-height:1.45;flex:1;}
+.inbox-txt strong{color:var(--tx);font-weight:600;}
+.inbox-time{font-size:10.5px;color:var(--tx3);margin-top:1px;}
+.tabs{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content;}
+.tab{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:var(--tx2);transition:.15s;border:none;background:none;font-family:'DM Sans',sans-serif;}
+.tab:hover{color:var(--tx);}
+.tab.on{background:var(--w);color:var(--ind);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:600;align-items:center;justify-content:center;}
+.mbg.open{display:flex;}
+.modal{background:var(--w);border-radius:18px;padding:28px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:mi .2s ease both;}
+@keyframes mi{from{opacity:0;transform:scale(.96) translateY(10px);}to{opacity:1;transform:none;}}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.mt{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;}
+.mc{width:30px;height:30px;border-radius:8px;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx2);transition:.15s;}
+.mc:hover{background:#fee2e2;color:var(--red);}
+.mc svg{width:14px;height:14px;}
+.dr{padding:10px 0;border-bottom:1px solid var(--bdr2);display:flex;gap:12px;}
+.dr:last-child{border-bottom:none;}
+.drl{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--tx3);min-width:110px;padding-top:2px;letter-spacing:.4px;text-transform:uppercase;}
+.drv{font-size:13px;color:var(--tx);flex:1;line-height:1.5;}
+.ssbox{border:1.5px dashed #c7d2fe;border-radius:10px;background:#f8f9ff;height:90px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--tx2);font-size:12.5px;margin-top:8px;}
+.ssbox svg{width:20px;height:20px;color:var(--ind);}
+.ma{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--bdr2);}
+.flabel{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;display:block;}
+.fsel{width:100%;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;padding:10px 12px;color:var(--tx);outline:none;cursor:pointer;margin-bottom:14px;transition:.18s;}
+.fsel:focus{border-color:var(--ind);}
+textarea.fsel{resize:none;height:80px;}
+.cmt-inp{width:100%;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;padding:9px 13px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);outline:none;resize:none;margin-bottom:8px;transition:.2s;}
+.cmt-inp:focus{border-color:var(--ind);}
+#toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:999;}
+.tst{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:13px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);animation:tsin .25s ease both,tsout .4s ease 2.6s both;font-family:'DM Sans',sans-serif;min-width:220px;color:#fff;}
+.tst.success{background:#064e3b;}
+.tst.error{background:#7f1d1d;}
+.tst.info{background:#1e1b4b;}
+.tst svg{width:16px;height:16px;flex-shrink:0;}
+@keyframes tsin{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:none;}}
+@keyframes tsout{from{opacity:1;}to{opacity:0;}}
+.empty{padding:40px;text-align:center;color:var(--tx3);font-size:13px;}
+</style>
+</head>
+<body>
+
+<!-- TOPNAV -->
+<header class="topnav">
+  <a href="#" class="logo">
+    <div class="logo-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+    <span class="logo-t">Bug<span>Tracker</span></span>
+  </a>
+  <div class="spacer"></div>
+  <div class="srch-wrap">
+    <div class="srch">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Search bug ID or title…" autocomplete="off">
+    </div>
+    <div class="srch-drop" id="searchDrop"></div>
+  </div>
+  <div class="ntf-wrap">
+    <div class="ntf-btn" onclick="toggleNotif()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="ntf-badge" id="ntfBadge"></span>
+    </div>
+    <div class="ntf-panel" id="ntfPanel">
+      <div class="ntf-head">
+        <span class="ntf-head-t">Notifications</span>
+        <button class="ntf-clear" onclick="markAllRead()">Mark all read</button>
+      </div>
+      <div class="ntf-scroll" id="ntfList"></div>
+    </div>
+  </div>
+  <div class="chip">
+    <div class="av av-admin" id="adminAv">AD</div>
+    <div><div class="un" id="adminName">Admin User</div><div class="ur">Administrator</div></div>
+    <span class="rb-admin">Admin</span>
+  </div>
+  <a href="login.html" class="lo-btn" onclick="doLogout(event)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Logout
+  </a>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <span class="sl">Main</span>
+  <a class="ni on" onclick="nav(this);show('dash')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </a>
+  <span class="sl">Bug Management</span>
+  <a class="ni" onclick="nav(this);show('allbugs')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    All Bugs <span class="nb" id="sb-all">0</span>
+  </a>
+  <a class="ni" onclick="nav(this);show('inbox')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    New Reports <span class="nb" id="sb-new">0</span>
+  </a>
+  <a class="ni" onclick="nav(this);show('assigned')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-3.59"/></svg>
+    Assigned Bugs <span class="nb" id="sb-asgn">0</span>
+  </a>
+  <a class="ni" onclick="nav(this);show('unassigned')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Unassigned <span class="nb" id="sb-una">0</span>
+  </a>
+  <span class="sl">Admin</span>
+  <a class="ni" onclick="nav(this);show('users')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Users
+  </a>
+  <a class="ni" onclick="nav(this);show('reports')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Reports
+  </a>
+  <div class="sf">
+    <a class="ni" onclick="nav(this);show('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M4.93 4.93l1.41 1.41M1 12h2m18 0h2M12 1v2m0 18v2"/></svg>
+      Settings
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div id="s-dash" class="view">
+    <div class="ph">
+      <div><div class="ph-t">Admin Dashboard</div><div class="ph-s">Monitor, assign and manage all bugs across the system.</div></div>
+      <div class="btn-row">
+        <button class="btn-s" onclick="exportCSV()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+        <button class="btn-p" onclick="nav(document.querySelectorAll('.ni')[3]);show('inbox')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          View New Reports
+        </button>
+      </div>
+    </div>
+    <div class="stats" id="dashStats"></div>
+    <div class="row2">
+      <div class="panel">
+        <div class="panel-h">
+          <div><div class="panel-t">New Reports Inbox</div><div class="panel-s">Recently submitted by testers</div></div>
+          <span class="badge b-new" id="inboxBadge">0 new</span>
+        </div>
+        <div id="inboxPreview"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><div><div class="panel-t">Recent Activity</div></div></div>
+        <div class="act-list" id="actFeed"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="s-allbugs" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">All Bugs</div><div class="ph-s" id="allbugs-sub"></div></div></div>
+    <div class="panel"><div class="tbl-wrap" id="allBugsTbl"></div></div>
+  </div>
+
+  <div id="s-inbox" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">New Reports</div><div class="ph-s">Unreviewed bugs submitted by testers — assign them to developers</div></div></div>
+    <div class="panel"><div id="inboxFull"></div></div>
+  </div>
+
+  <div id="s-assigned" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">Assigned Bugs</div><div class="ph-s" id="assigned-sub"></div></div></div>
+    <div class="panel"><div class="tbl-wrap" id="assignedTbl"></div></div>
+  </div>
+
+  <div id="s-unassigned" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">Unassigned Bugs</div><div class="ph-s">These bugs have not been assigned to any developer yet</div></div></div>
+    <div class="panel"><div class="tbl-wrap" id="unassignedTbl"></div></div>
+  </div>
+
+  <div id="s-users" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">Users</div><div class="ph-s">All registered testers and developers</div></div></div>
+    <div class="tabs">
+      <button class="tab on" id="tab-tester" onclick="switchUserTab('tester')">Testers</button>
+      <button class="tab" id="tab-developer" onclick="switchUserTab('developer')">Developers</button>
+    </div>
+    <div id="testerGrid"></div>
+    <div id="devGrid" style="display:none;"></div>
+  </div>
+
+  <div id="s-reports" class="view" style="display:none;">
+    <div class="ph">
+      <div><div class="ph-t">Reports</div><div class="ph-s">Full tabular report of all bugs</div></div>
+      <div class="btn-row"><button class="btn-s" onclick="exportCSV()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <select id="filter-status" class="fsel" style="width:150px;margin:0;" onchange="renderReports()">
+        <option value="">All Statuses</option>
+        <option>Open</option><option>In Progress</option><option>Testing</option><option>Resolved</option>
+      </select>
+      <select id="filter-priority" class="fsel" style="width:150px;margin:0;" onchange="renderReports()">
+        <option value="">All Priorities</option>
+        <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+      </select>
+      <select id="filter-project" class="fsel" style="width:160px;margin:0;" onchange="renderReports()">
+        <option value="">All Projects</option>
+        <option>Web App</option><option>API</option><option>Auth</option><option>Reporting</option><option>Mobile</option><option>Other</option>
+      </select>
+    </div>
+    <div class="panel"><div class="tbl-wrap" id="reportsTbl"></div></div>
+  </div>
+
+  <div id="s-settings" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">Settings</div><div class="ph-s">System preferences</div></div></div>
+    <div class="panel">
+      <div class="panel-h"><div><div class="panel-t">Notification Settings</div></div></div>
+      <div class="act-list">
+        <div class="ai"><div style="flex:1;font-size:13px;color:var(--tx2);">New bug submitted by tester</div><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+        <div class="ai"><div style="flex:1;font-size:13px;color:var(--tx2);">Bug resolved by developer</div><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+        <div class="ai"><div style="flex:1;font-size:13px;color:var(--tx2);">Bug status updates</div><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+        <div class="ai"><div style="flex:1;font-size:13px;color:var(--tx2);">New user registration</div><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- BUG DETAIL MODAL -->
+<div class="mbg" id="detailMod">
+  <div class="modal">
+    <div class="mh">
+      <div class="mt" id="dTitle">Bug Details</div>
+      <button class="mc" onclick="cm('detailMod')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="dBody"></div>
+    <div style="margin-top:14px;">
+      <label style="display:block;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--tx3);margin-bottom:8px;">Comments</label>
+      <div id="dCmt" style="max-height:120px;overflow-y:auto;margin-bottom:8px;"></div>
+      <textarea class="cmt-inp" id="cmt-text" rows="2" placeholder="Add a comment…"></textarea>
+      <button class="btn-p" style="width:100%;justify-content:center;" onclick="submitComment()">Send Comment</button>
+    </div>
+    <div class="ma"><button class="btn-s" onclick="cm('detailMod')">Close</button></div>
+  </div>
+</div>
+
+<!-- ASSIGN MODAL -->
+<div class="mbg" id="assignMod">
+  <div class="modal" style="width:420px;">
+    <div class="mh">
+      <div class="mt">Assign Bug to Developer</div>
+      <button class="mc" onclick="cm('assignMod')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="dr"><div class="drl">Bug</div><div class="drv" id="asgn-bug-title" style="font-weight:600;color:var(--ind);"></div></div>
+    <div style="height:12px;"></div>
+    <label class="flabel">Select Developer</label>
+    <select class="fsel" id="asgn-dev"><option value="">— Choose Developer —</option></select>
+    <label class="flabel">Priority Override</label>
+    <select class="fsel" id="asgn-priority">
+      <option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option>
+    </select>
+    <label class="flabel">Notes for Developer</label>
+    <textarea class="fsel" placeholder="Add context or notes…"></textarea>
+    <div class="ma">
+      <button class="btn-s" onclick="cm('assignMod')">Cancel</button>
+      <button class="btn-p" onclick="confirmAssign()">Confirm Assignment</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script>
+var API = '/api';
+var myToken = '';
+var cachedBugs = [];
+var cachedDevs = [];
+var currentBugId = null;
+var assignBugId = null;
+
+// ── AUTH ──
+(function(){
+  var s = localStorage.getItem('bt_session');
+  var t = localStorage.getItem('bt_token');
+  if(!s||!t){ window.location.replace('login.html'); return; }
+  var u = JSON.parse(s);
+  if(u.role !== 'admin'){ window.location.replace('login.html'); return; }
+  myToken = t;
+  var ini = u.name.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+  document.getElementById('adminAv').textContent   = ini;
+  document.getElementById('adminName').textContent = u.name;
+})();
+window.addEventListener('pageshow', function(e){
+  if(e.persisted){ var s=localStorage.getItem('bt_session'); if(!s) window.location.replace('login.html'); }
+});
+
+function doLogout(e){
+  e.preventDefault();
+  localStorage.removeItem('bt_token');
+  localStorage.removeItem('bt_session');
+  window.location.replace('login.html');
+}
+
+// ── HELPERS ──
+function fmt(iso){ if(!iso)return'—'; var d=new Date(iso); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function ago(iso){ if(!iso)return'—'; var s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return s+'s ago'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }
+function sb(s){ var m={Open:'b-open','In Progress':'b-prog',Testing:'b-test',Resolved:'b-res',Closed:'b-res'}; return '<span class="badge '+(m[s]||'b-open')+'">'+s+'</span>'; }
+function pb(p){ var m={Critical:'b-crit',High:'b-high',Medium:'b-med',Low:'b-low'}; return '<span class="badge '+(m[p]||'b-med')+'">'+p+'</span>'; }
+function getInitials(n){ if(!n)return'?'; return n.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2); }
+
+// ── TOAST ──
+function toast(msg,type){
+  type=type||'info';
+  var t=document.createElement('div'); t.className='tst '+type;
+  t.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>'+msg+'</span>';
+  document.getElementById('toast-wrap').appendChild(t);
+  setTimeout(function(){t.remove();},3200);
+}
+function om(id){document.getElementById(id).classList.add('open');}
+function cm(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.mbg').forEach(function(m){m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.srch-wrap')) document.getElementById('searchDrop').classList.remove('open');
+  if(!e.target.closest('.ntf-wrap'))  document.getElementById('ntfPanel').classList.remove('open');
+});
+
+// ── API ──
+async function apiFetch(path, opts){
+  opts=opts||{};
+  opts.headers=Object.assign({'Content-Type':'application/json','Authorization':'Bearer '+myToken},opts.headers||{});
+  var res=await fetch(API+path,opts);
+  return res.json();
+}
+
+// ── LOAD ALL BUGS ──
+async function loadBugs(){
+  try {
+    var data = await apiFetch('/bugs');
+    cachedBugs = Array.isArray(data) ? data : [];
+  } catch(e){ cachedBugs=[]; }
+  return cachedBugs;
+}
+
+// ── LOAD DEVELOPERS ──
+async function loadDevs(){
+  try {
+    var data = await apiFetch('/users/role/developer');
+    cachedDevs = Array.isArray(data) ? data : [];
+  } catch(e){ cachedDevs=[]; }
+  return cachedDevs;
+}
+
+// ── NAV / SHOW ──
+function nav(el){ document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('on');}); el.classList.add('on'); }
+function show(s){
+  ['dash','allbugs','inbox','assigned','unassigned','users','reports','settings'].forEach(function(x){
+    var el=document.getElementById('s-'+x);
+    if(el){el.style.display='none';}
+  });
+  var t=document.getElementById('s-'+s);
+  if(t){t.style.display='block';t.classList.remove('view');void t.offsetWidth;t.classList.add('view');}
+  if(s==='dash')       renderDash();
+  if(s==='allbugs')    renderAllBugs();
+  if(s==='inbox')      renderInbox();
+  if(s==='assigned')   renderAssigned();
+  if(s==='unassigned') renderUnassigned();
+  if(s==='users')      renderUsers();
+  if(s==='reports')    renderReports();
+  updateSidebarCounts();
+}
+
+// ── SIDEBAR COUNTS ──
+function updateSidebarCounts(){
+  var open = cachedBugs.filter(function(b){return b.status==='Open';}).length;
+  var asgn = cachedBugs.filter(function(b){return b.assigned_to;}).length;
+  var una  = cachedBugs.filter(function(b){return !b.assigned_to;}).length;
+  document.getElementById('sb-all').textContent  = cachedBugs.length;
+  document.getElementById('sb-new').textContent  = open;
+  document.getElementById('sb-asgn').textContent = asgn;
+  document.getElementById('sb-una').textContent  = una;
+}
+
+// ── DASHBOARD ──
+async function renderDash(){
+  var bugs = await loadBugs();
+  var tot=bugs.length,
+      op=bugs.filter(function(b){return b.status==='Open';}).length,
+      pr=bugs.filter(function(b){return b.status==='In Progress'||b.status==='Testing';}).length,
+      rs=bugs.filter(function(b){return b.status==='Resolved'||b.status==='Closed';}).length;
+
+  var svgs={
+    shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    alert:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+    refresh:'<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-3.59"/>',
+    check:'<polyline points="20 6 9 17 4 12"/>'
+  };
+  document.getElementById('dashStats').innerHTML=[
+    {cls:'s-tot',icon:'shield',v:tot,l:'Total Bugs',pct:100},
+    {cls:'s-open',icon:'alert',v:op,l:'Open',pct:tot?Math.round(op/tot*100):0},
+    {cls:'s-prog',icon:'refresh',v:pr,l:'In Progress',pct:tot?Math.round(pr/tot*100):0},
+    {cls:'s-res',icon:'check',v:rs,l:'Resolved',pct:tot?Math.round(rs/tot*100):0}
+  ].map(function(s){
+    return '<div class="sc '+s.cls+'"><div class="sc-top"><div class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+svgs[s.icon]+'</svg></div></div><div class="sc-v">'+s.v+'</div><div class="sc-l">'+s.l+'</div><div class="sc-bar"><div class="sc-fill" style="width:'+s.pct+'%"></div></div></div>';
+  }).join('');
+
+  var newBugs = bugs.filter(function(b){return b.status==='Open';}).slice(0,4);
+  document.getElementById('inboxBadge').textContent = newBugs.length+' new';
+  document.getElementById('inboxPreview').innerHTML = newBugs.length
+    ? newBugs.map(function(b){
+        return '<div class="inbox-item">'
+          +'<div class="inbox-av av-tester">'+getInitials(b.reporter)+'</div>'
+          +'<div style="flex:1;"><div class="inbox-txt"><strong>'+b.reporter+'</strong> submitted "'+b.title+'"</div><div class="inbox-time">'+ago(b.created_at)+'</div></div>'
+          +'<button class="act-btn ab-assign" onclick="openAssignModal(\''+b.id+'\')">Assign</button>'
+          +'</div>';
+      }).join('')
+    : '<div class="empty">No new open reports.</div>';
+
+  document.getElementById('actFeed').innerHTML = bugs.slice(0,6).map(function(b){
+    var ico = b.status==='Resolved'?'background:#ecfdf5;color:#059669;':'background:var(--ind-l);color:var(--ind);';
+    return '<div class="ai"><div class="ai-ico" style="'+ico+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div style="flex:1;"><div class="ai-txt"><strong>'+b.id+'</strong> — '+(b.title.length>45?b.title.slice(0,45)+'…':b.title)+' '+sb(b.status)+'</div><div class="ai-time">'+ago(b.created_at)+'</div></div></div>';
+  }).join('');
+  updateSidebarCounts();
+}
+
+// ── BUG TABLE ──
+function bugTable(bugs, showAssignBtn){
+  if(!bugs.length) return '<div class="empty">No bugs found.</div>';
+  var rows = bugs.map(function(b){
+    var assignCell = showAssignBtn
+      ? '<button class="act-btn ab-assign" onclick="openAssignModal(\''+b.id+'\')">Assign</button>'
+      : (b.assigned_to ? '<span style="font-size:12px;font-weight:600;color:var(--tx);">'+b.assigned_to+'</span>' : '<span class="badge b-una">Unassigned</span>');
+    return '<tr>'
+      +'<td class="tid">'+b.id+'</td>'
+      +'<td class="td-m" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+b.title+'</td>'
+      +'<td>'+(b.project||'—')+'</td>'
+      +'<td>'+pb(b.priority)+'</td>'
+      +'<td>'+sb(b.status)+'</td>'
+      +'<td style="font-size:12px;">'+(b.reporter||'—')+'</td>'
+      +'<td>'+assignCell+'</td>'
+      +'<td style="white-space:nowrap;"><button class="act-btn ab-view" onclick="viewDetail(\''+b.id+'\')">View</button>'
+      +(b.status!=='Resolved'&&b.status!=='Closed'?' <button class="act-btn ab-resolve" onclick="resolveBug(\''+b.id+'\')">Resolve</button>':'')
+      +'</td>'
+      +'</tr>';
+  }).join('');
+  return '<table><thead><tr><th>Bug ID</th><th>Title</th><th>Project</th><th>Priority</th><th>Status</th><th>Reporter</th><th>Assigned To</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+async function renderAllBugs(){
+  var bugs = await loadBugs();
+  document.getElementById('allbugs-sub').textContent = bugs.length+' total bugs in the system';
+  document.getElementById('allBugsTbl').innerHTML = bugTable(bugs, false);
+}
+
+async function renderInbox(){
+  var bugs = await loadBugs();
+  var open = bugs.filter(function(b){return b.status==='Open';});
+  if(!open.length){ document.getElementById('inboxFull').innerHTML='<div class="empty">No new open reports.</div>'; return; }
+  document.getElementById('inboxFull').innerHTML = open.map(function(b){
+    return '<div class="inbox-item">'
+      +'<div class="inbox-av av-tester">'+getInitials(b.reporter)+'</div>'
+      +'<div style="flex:1;"><div class="inbox-txt"><strong>'+b.reporter+'</strong> submitted <strong>'+b.id+'</strong> — '+b.title+'</div>'
+      +'<div style="display:flex;gap:6px;margin-top:5px;">'+pb(b.priority)+' <span style="font-size:11.5px;color:var(--tx3);">'+ago(b.created_at)+'</span></div></div>'
+      +'<div style="display:flex;gap:6px;"><button class="act-btn ab-view" onclick="viewDetail(\''+b.id+'\')">View</button><button class="act-btn ab-assign" onclick="openAssignModal(\''+b.id+'\')">Assign</button></div>'
+      +'</div>';
+  }).join('');
+}
+
+async function renderAssigned(){
+  var bugs = await loadBugs();
+  var asgn = bugs.filter(function(b){return b.assigned_to;});
+  document.getElementById('assigned-sub').textContent = asgn.length+' bugs assigned to developers';
+  document.getElementById('assignedTbl').innerHTML = bugTable(asgn, false);
+}
+
+async function renderUnassigned(){
+  var bugs = await loadBugs();
+  var una = bugs.filter(function(b){return !b.assigned_to;});
+  document.getElementById('unassignedTbl').innerHTML = bugTable(una, true);
+}
+
+// ── USERS ──
+async function renderUsers(){
+  try {
+    var testers = await apiFetch('/users/role/tester');
+    var devs    = await apiFetch('/users/role/developer');
+    cachedDevs  = Array.isArray(devs) ? devs : [];
+    document.getElementById('testerGrid').innerHTML  = renderUserTable(Array.isArray(testers)?testers:[], 'tester');
+    document.getElementById('devGrid').innerHTML     = renderUserTable(cachedDevs, 'developer');
+  } catch(e){}
+}
+function renderUserTable(users, role){
+  if(!users.length) return '<div class="panel"><div class="empty">No '+role+'s registered yet.</div></div>';
+  var color = role==='tester'?'av-tester':'av-dev';
+  var rows = users.map(function(u){
+    var submitted = role==='tester'  ? cachedBugs.filter(function(b){return b.reporter===u.name;}).length : '—';
+    var assigned  = role==='developer'? cachedBugs.filter(function(b){return b.assigned_to===u.name;}).length : '—';
+    var resolved  = role==='developer'? cachedBugs.filter(function(b){return b.assigned_to===u.name&&(b.status==='Resolved'||b.status==='Closed');}).length : '—';
+    return '<tr>'
+      +'<td><div style="display:flex;align-items:center;gap:10px;"><div class="av '+color+'" style="width:34px;height:34px;font-size:11px;">'+getInitials(u.name)+'</div><div><div style="font-weight:600;font-size:13px;color:var(--tx);">'+u.name+'</div><div style="font-size:11.5px;color:var(--tx3);">'+u.email+'</div></div></div></td>'
+      +'<td><span class="badge '+(role==='tester'?'b-new':'b-res')+'">'+role.charAt(0).toUpperCase()+role.slice(1)+'</span></td>'
+      +(role==='tester'?'<td style="font-weight:700;color:var(--tx);">'+submitted+'</td>':'')
+      +(role==='developer'?'<td style="font-weight:700;color:var(--amb);">'+assigned+'</td><td style="font-weight:700;color:var(--grn);">'+resolved+'</td>':'')
+      +'<td style="font-size:11.5px;color:var(--tx3);">'+fmt(u.joined_at)+'</td>'
+      +'</tr>';
+  }).join('');
+  var headers = role==='tester'
+    ? '<th>User</th><th>Role</th><th>Bugs Submitted</th><th>Joined</th>'
+    : '<th>User</th><th>Role</th><th>Bugs Assigned</th><th>Bugs Resolved</th><th>Joined</th>';
+  return '<div class="panel"><div class="panel-h"><div><div class="panel-t">'+(role==='tester'?'Testers':'Developers')+' <span style="font-size:12px;font-weight:500;color:var(--tx3);">('+users.length+' registered)</span></div></div></div><div class="tbl-wrap"><table><thead><tr>'+headers+'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+var currentUserTab='tester';
+function switchUserTab(tab){
+  currentUserTab=tab;
+  document.getElementById('tab-tester').classList.toggle('on',tab==='tester');
+  document.getElementById('tab-developer').classList.toggle('on',tab==='developer');
+  document.getElementById('testerGrid').style.display=tab==='tester'?'block':'none';
+  document.getElementById('devGrid').style.display=tab==='developer'?'block':'none';
+}
+
+// ── REPORTS ──
+async function renderReports(){
+  var bugs = await loadBugs();
+  var fs=document.getElementById('filter-status').value;
+  var fp=document.getElementById('filter-priority').value;
+  var fpr=document.getElementById('filter-project').value;
+  if(fs)  bugs=bugs.filter(function(b){return b.status===fs;});
+  if(fp)  bugs=bugs.filter(function(b){return b.priority===fp;});
+  if(fpr) bugs=bugs.filter(function(b){return b.project===fpr;});
+  if(!bugs.length){document.getElementById('reportsTbl').innerHTML='<div class="empty">No bugs match the selected filters.</div>';return;}
+  var rows=bugs.map(function(b){
+    return '<tr>'
+      +'<td class="tid">'+b.id+'</td>'
+      +'<td class="td-m" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+b.title+'</td>'
+      +'<td>'+(b.project||'—')+'</td>'
+      +'<td>'+pb(b.priority)+'</td>'
+      +'<td>'+sb(b.status)+'</td>'
+      +'<td style="font-size:12px;">'+(b.reporter||'—')+'</td>'
+      +'<td style="font-size:12px;">'+(b.assigned_to||'<span class="badge b-una">Unassigned</span>')+'</td>'
+      +'<td style="font-size:11.5px;color:var(--tx3);white-space:nowrap;">'+fmt(b.created_at)+'</td>'
+      +'<td>'+(b.resolved_at?'<span style="font-size:11.5px;color:var(--grn);">'+fmt(b.resolved_at)+'</span>':'<span style="color:var(--tx3);font-size:12px;">—</span>')+'</td>'
+      +'<td><button class="act-btn ab-view" onclick="viewDetail(\''+b.id+'\')">View</button></td>'
+      +'</tr>';
+  }).join('');
+  document.getElementById('reportsTbl').innerHTML='<table><thead><tr><th>Bug ID</th><th>Title</th><th>Project</th><th>Priority</th><th>Status</th><th>Reporter</th><th>Assigned To</th><th>Submitted</th><th>Resolved At</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+// ── VIEW DETAIL ──
+async function viewDetail(id){
+  currentBugId = id;
+  try {
+    var b = await apiFetch('/bugs/'+id);
+    document.getElementById('dTitle').textContent = b.id+' — '+b.title;
+    document.getElementById('dBody').innerHTML=
+      '<div class="dr"><div class="drl">Bug ID</div><div class="drv" style="font-family:\'DM Mono\',monospace;font-weight:600;color:var(--ind);">'+b.id+'</div></div>'
+      +'<div class="dr"><div class="drl">Project</div><div class="drv">'+(b.project||'—')+'</div></div>'
+      +'<div class="dr"><div class="drl">Priority</div><div class="drv">'+pb(b.priority)+'</div></div>'
+      +'<div class="dr"><div class="drl">Status</div><div class="drv">'+sb(b.status)+'</div></div>'
+      +'<div class="dr"><div class="drl">Reporter</div><div class="drv">'+(b.reporter||'—')+'</div></div>'
+      +'<div class="dr"><div class="drl">Assigned To</div><div class="drv">'+(b.assigned_to||'<em style="color:var(--tx3);">Not assigned</em>')+'</div></div>'
+      +'<div class="dr"><div class="drl">Submitted</div><div class="drv">'+fmt(b.created_at)+'</div></div>'
+      +'<div class="dr"><div class="drl">Description</div><div class="drv">'+(b.description||'—')+'</div></div>'
+      +(b.steps?'<div class="dr"><div class="drl">Steps</div><div class="drv" style="white-space:pre-line;">'+b.steps+'</div></div>':'')
+      +(b.screenshot?'<div class="ssbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Screenshot attached</div>':'');
+    var c = b.comments||[];
+    document.getElementById('dCmt').innerHTML = c.length
+      ? c.map(function(x){return '<div style="background:#f8f9ff;border-radius:8px;padding:8px 11px;margin-bottom:6px;font-size:12.5px;border:1px solid var(--bdr2);"><strong>'+x.author+'</strong><span style="color:var(--tx3);font-size:11px;margin-left:8px;">'+ago(x.created_at)+'</span><div style="color:var(--tx2);margin-top:2px;">'+x.text+'</div></div>';}).join('')
+      : '<div style="color:var(--tx3);font-size:12.5px;">No comments yet.</div>';
+    document.getElementById('cmt-text').value='';
+    om('detailMod');
+  } catch(e){ toast('Could not load bug.','error'); }
+}
+
+async function submitComment(){
+  var txt=document.getElementById('cmt-text').value.trim();
+  if(!txt||!currentBugId){toast('Write a comment first.','error');return;}
+  try {
+    await apiFetch('/bugs/'+currentBugId+'/comments',{method:'POST',body:JSON.stringify({text:txt})});
+    document.getElementById('cmt-text').value='';
+    await viewDetail(currentBugId);
+    toast('Comment sent!','success');
+  } catch(e){ toast('Error sending comment.','error'); }
+}
+
+// ── ASSIGN ──
+async function openAssignModal(id){
+  assignBugId = id;
+  var b = cachedBugs.find(function(x){return x.id===id;});
+  if(!b) b = await apiFetch('/bugs/'+id);
+  document.getElementById('asgn-bug-title').textContent = b.id+' — '+b.title;
+  var devs = await loadDevs();
+  document.getElementById('asgn-dev').innerHTML = '<option value="">— Choose Developer —</option>'
+    + devs.map(function(d){return '<option value="'+d.id+'" data-name="'+d.name+'"'+(b.assigned_to===d.name?' selected':'')+'>'+d.name+'</option>';}).join('');
+  om('assignMod');
+}
+
+async function confirmAssign(){
+  var sel = document.getElementById('asgn-dev');
+  var devId = sel.value;
+  var devName = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].getAttribute('data-name') : '';
+  if(!devId){toast('Please select a developer!','error');return;}
+  var prio = document.getElementById('asgn-priority').value;
+  try {
+    var res = await fetch(API+'/bugs/'+assignBugId,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+myToken},
+      body:JSON.stringify({assigned_to:devName, assigned_to_id:devId, priority:prio})
+    });
+    var data = await res.json();
+    if(!res.ok){toast(data.message||'Error assigning','error');return;}
+    cm('assignMod');
+    toast('Bug assigned to '+devName+'!','success');
+    await loadBugs();
+    updateSidebarCounts();
+    refreshCurrentView();
+  } catch(e){ toast('Error assigning bug.','error'); }
+}
+
+async function resolveBug(id){
+  try {
+    var res = await fetch(API+'/bugs/'+id,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+myToken},
+      body:JSON.stringify({status:'Resolved'})
+    });
+    if(!res.ok){toast('Error resolving bug.','error');return;}
+    toast('Bug marked as Resolved!','success');
+    await loadBugs();
+    updateSidebarCounts();
+    refreshCurrentView();
+  } catch(e){ toast('Error resolving bug.','error'); }
+}
+
+// ── SEARCH ──
+document.getElementById('searchInput').addEventListener('input',function(){
+  var q=this.value.trim().toLowerCase();
+  var drop=document.getElementById('searchDrop');
+  if(!q){drop.classList.remove('open');return;}
+  var results=cachedBugs.filter(function(b){
+    return b.id.toLowerCase().includes(q)||b.title.toLowerCase().includes(q)||(b.reporter&&b.reporter.toLowerCase().includes(q));
+  }).slice(0,8);
+  drop.innerHTML = results.length
+    ? results.map(function(b){return '<div class="sd-row" onclick="searchPick(\''+b.id+'\')">'+'<span class="sd-id">'+b.id+'</span><span class="sd-ttl">'+b.title+'</span>'+sb(b.status)+'</div>';}).join('')
+    : '<div class="sd-nil">No results for "'+this.value+'"</div>';
+  drop.classList.add('open');
+});
+function searchPick(id){
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchDrop').classList.remove('open');
+  viewDetail(id);
+}
+
+// ── NOTIFICATIONS ──
+async function renderNotifs(){
+  try {
+    var notifs = await apiFetch('/notifications');
+    var unread = notifs.filter(function(n){return !n.is_read;}).length;
+    var badge = document.getElementById('ntfBadge');
+    if(unread>0){badge.textContent=unread>9?'9+':unread;badge.classList.add('on');}
+    else badge.classList.remove('on');
+    var list=document.getElementById('ntfList');
+    if(!notifs.length){list.innerHTML='<div class="ntf-nil">No notifications yet.</div>';return;}
+    var typeStyle={new:'background:var(--ind-l);color:var(--ind);',resolved:'background:#ecfdf5;color:#059669;',update:'background:#fffbeb;color:#d97706;',assigned:'background:#ede9fe;color:#7c3aed;',comment:'background:#f3f4f6;color:#374151;',user:'background:#fef2f2;color:var(--red);',info:'background:var(--ind-l);color:var(--ind);'};
+    list.innerHTML=notifs.map(function(n){
+      var st=typeStyle[n.type]||typeStyle.info;
+      return '<div class="ntf-row'+(n.is_read?'':' unread')+'" onclick="ntfClick(\''+n.bug_id+'\')">'
+        +'<div class="ntf-ico" style="'+st+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>'
+        +'<div style="flex:1;"><div class="ntf-msg">'+n.message+'</div><div class="ntf-when">'+ago(n.created_at)+'</div></div>'
+        +(n.is_read?'':'<div class="ntf-dot"></div>')
+        +'</div>';
+    }).join('');
+  } catch(e){}
+}
+function toggleNotif(){
+  var p=document.getElementById('ntfPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')) renderNotifs();
+}
+async function markAllRead(){
+  await apiFetch('/notifications/read',{method:'PUT'});
+  renderNotifs();
+  toast('All notifications marked as read','info');
+}
+function ntfClick(bugId){
+  document.getElementById('ntfPanel').classList.remove('open');
+  if(bugId) viewDetail(bugId);
+}
+
+// ── EXPORT CSV ──
+function exportCSV(){
+  var bugs=cachedBugs;
+  var headers=['Bug ID','Title','Project','Priority','Status','Reporter','Assigned To','Submitted','Resolved At'];
+  var rows=bugs.map(function(b){
+    return [b.id,'"'+b.title+'"',b.project||'',b.priority,b.status,b.reporter||'',b.assigned_to||'',b.created_at,b.resolved_at||''].join(',');
+  });
+  var csv=[headers.join(',')].concat(rows).join('\n');
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='bugtracker-report-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('CSV exported!','success');
+}
+
+// ── REFRESH CURRENT VIEW ──
+function refreshCurrentView(){
+  var on=document.querySelector('.ni.on');
+  if(!on) return;
+  var txt=on.textContent.trim().toLowerCase();
+  if(txt.includes('dashboard'))    renderDash();
+  else if(txt.includes('all bug')) renderAllBugs();
+  else if(txt.includes('new rep')) renderInbox();
+  else if(txt.includes('assigned bug')) renderAssigned();
+  else if(txt.includes('unassig')) renderUnassigned();
+  else if(txt.includes('report'))  renderReports();
+}
+
+// ── INIT ──
+renderDash();
+renderNotifs();
+setInterval(function(){ renderNotifs(); updateSidebarCounts(); }, 5000);
+</script>
+</body>
+</html>

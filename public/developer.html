@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Developer — BugTracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --sw:240px;--nh:64px;
+  --bg:#f0fdf8;--w:#fff;
+  --bdr:#bbf7d0;--bdr2:#dcfce7;
+  --grn:#10b981;--grn-d:#059669;--grn-l:#ecfdf5;
+  --tx:#111827;--tx2:#6b7280;--tx3:#9ca3af;
+  --red:#ef4444;--amb:#f59e0b;--ind:#4f46e5;--pur:#8b5cf6;
+  --sb:#064e3b;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
+.topnav{position:fixed;top:0;left:0;right:0;height:var(--nh);background:var(--w);border-bottom:1.5px solid var(--bdr);display:flex;align-items:center;padding:0 20px 0 0;z-index:300;gap:10px;}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;width:var(--sw);padding:0 18px;border-right:1.5px solid var(--bdr);height:100%;flex-shrink:0;}
+.logo-i{width:34px;height:34px;background:var(--grn);border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.logo-i svg{width:17px;height:17px;color:#fff;}
+.logo-t{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--tx);}
+.logo-t span{color:var(--grn);}
+.spacer{flex:1;}
+.srch-wrap{position:relative;}
+.srch{display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;padding:8px 13px;width:230px;transition:.2s;}
+.srch:focus-within{border-color:var(--grn);background:var(--w);box-shadow:0 0 0 3px rgba(16,185,129,.1);}
+.srch svg{width:14px;height:14px;color:var(--tx3);flex-shrink:0;}
+.srch input{background:none;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);width:100%;}
+.srch input::placeholder{color:var(--tx3);}
+.srch-drop{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--w);border:1.5px solid var(--bdr);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.1);z-index:500;max-height:280px;overflow-y:auto;}
+.srch-drop.open{display:block;}
+.sd-row{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bdr2);transition:.12s;}
+.sd-row:last-child{border-bottom:none;}
+.sd-row:hover{background:var(--grn-l);}
+.sd-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--grn-d);min-width:82px;font-weight:500;}
+.sd-ttl{font-size:12.5px;color:var(--tx);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sd-nil{padding:16px;text-align:center;font-size:13px;color:var(--tx3);}
+.ntf-wrap{position:relative;}
+.ntf-btn{width:38px;height:38px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex-shrink:0;}
+.ntf-btn:hover{background:var(--grn-l);border-color:var(--grn);}
+.ntf-btn svg{width:16px;height:16px;color:var(--tx2);}
+.ntf-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;background:var(--red);border-radius:9px;border:2px solid var(--w);display:none;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;padding:0 3px;font-family:'DM Mono',monospace;}
+.ntf-badge.on{display:flex;}
+.ntf-panel{display:none;position:absolute;top:calc(100% + 10px);right:0;width:340px;background:var(--w);border:1.5px solid var(--bdr);border-radius:14px;box-shadow:0 16px 44px rgba(0,0,0,.13);z-index:500;overflow:hidden;}
+.ntf-panel.open{display:block;animation:fd .18s ease both;}
+@keyframes fd{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+.ntf-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--bdr2);}
+.ntf-head-t{font-size:13.5px;font-weight:700;}
+.ntf-clear{background:none;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--grn);cursor:pointer;}
+.ntf-clear:hover{text-decoration:underline;}
+.ntf-scroll{max-height:300px;overflow-y:auto;}
+.ntf-row{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid var(--bdr2);cursor:pointer;transition:.12s;}
+.ntf-row:last-child{border-bottom:none;}
+.ntf-row:hover{background:var(--grn-l);}
+.ntf-row.unread{background:#f0fdf8;}
+.ntf-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ntf-ico svg{width:13px;height:13px;}
+.ntf-msg{font-size:12.5px;color:var(--tx2);line-height:1.45;flex:1;}
+.ntf-when{font-size:10.5px;color:var(--tx3);margin-top:2px;}
+.ntf-dot{width:7px;height:7px;background:var(--grn);border-radius:50%;margin-top:5px;flex-shrink:0;}
+.ntf-nil{padding:22px;text-align:center;font-size:13px;color:var(--tx3);}
+.rb-dev{font-size:10px;font-weight:700;padding:3px 9px;border-radius:50px;background:var(--grn-l);color:var(--grn-d);font-family:'DM Mono',monospace;letter-spacing:.3px;}
+.chip{display:flex;align-items:center;gap:9px;padding:5px 11px 5px 5px;border-radius:11px;border:1.5px solid var(--bdr);background:var(--w);transition:.2s;}
+.chip:hover{background:var(--grn-l);}
+.av{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:'DM Mono',monospace;flex-shrink:0;}
+.un{font-size:13px;font-weight:600;color:var(--tx);}
+.ur{font-size:11px;color:var(--tx3);}
+.lo-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#fef2f2;border:1.5px solid #fecaca;color:var(--red);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:.2s;}
+.lo-btn:hover{background:#fee2e2;}
+.lo-btn svg{width:14px;height:14px;}
+.sidebar{position:fixed;top:var(--nh);left:0;width:var(--sw);height:calc(100vh - var(--nh));background:var(--sb);padding:18px 12px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+.sl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:#065f46;padding:10px 10px 4px;}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;text-decoration:none;color:#6ee7b7;font-size:13.5px;font-weight:500;transition:.16s;user-select:none;}
+.ni:hover{background:#065f46;color:#fff;}
+.ni.on{background:var(--grn);color:#fff;font-weight:600;}
+.ni svg{width:15px;height:15px;flex-shrink:0;}
+.nb{margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:50px;background:rgba(239,68,68,.22);color:#fca5a5;}
+.ni.on .nb{background:rgba(255,255,255,.2);color:#fff;}
+.sf{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.06);}
+.sf .ni{color:#065f46;}
+.main{margin-left:var(--sw);margin-top:var(--nh);padding:26px 26px 52px;}
+.view{animation:fu .3s ease both;}
+@keyframes fu{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;}
+.ph-t{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.4px;}
+.ph-s{font-size:12.5px;color:var(--tx3);margin-top:3px;}
+.btn-row{display:flex;gap:9px;}
+.btn-p{display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--grn);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(16,185,129,.28);transition:.2s;}
+.btn-p:hover{background:var(--grn-d);}
+.btn-p svg{width:14px;height:14px;}
+.btn-s{display:flex;align-items:center;gap:6px;padding:9px 14px;background:var(--w);color:var(--tx2);border:1.5px solid var(--bdr);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
+.btn-s:hover{background:var(--grn-l);color:var(--grn);border-color:var(--grn);}
+.btn-s svg{width:14px;height:14px;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px;}
+.sc{background:var(--w);border-radius:16px;padding:20px;border:1.5px solid var(--bdr);position:relative;overflow:hidden;transition:.22s;}
+.sc:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.08);}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;}
+.sc.s-asgn::before{background:linear-gradient(90deg,#10b981,#34d399);}
+.sc.s-prog::before{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+.sc.s-test::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa);}
+.sc.s-res::before{background:linear-gradient(90deg,#4f46e5,#818cf8);}
+.sc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.sc-ico{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;}
+.sc-ico svg{width:20px;height:20px;}
+.sc.s-asgn .sc-ico{background:var(--grn-l);color:var(--grn);}
+.sc.s-prog .sc-ico{background:#fffbeb;color:var(--amb);}
+.sc.s-test .sc-ico{background:#ede9fe;color:var(--pur);}
+.sc.s-res  .sc-ico{background:#eef2ff;color:var(--ind);}
+.sc-v{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--tx);letter-spacing:-1px;line-height:1;}
+.sc-l{font-size:12px;color:var(--tx3);margin-top:4px;font-weight:500;}
+.sc-bar{height:3px;background:#e8faf4;border-radius:3px;margin-top:16px;overflow:hidden;}
+.sc-fill{height:100%;border-radius:3px;}
+.sc.s-asgn .sc-fill{background:var(--grn);}
+.sc.s-prog .sc-fill{background:var(--amb);}
+.sc.s-test .sc-fill{background:var(--pur);}
+.sc.s-res  .sc-fill{background:var(--ind);}
+.panel{background:var(--w);border-radius:16px;border:1.5px solid var(--bdr);overflow:hidden;margin-bottom:16px;}
+.panel-h{padding:15px 20px;border-bottom:1px solid var(--bdr2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.panel-t{font-size:14px;font-weight:700;}
+.panel-s{font-size:11.5px;color:var(--tx3);margin-top:2px;}
+.va{font-size:12px;color:var(--grn);font-weight:600;cursor:pointer;text-decoration:none;}
+.va:hover{text-decoration:underline;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:600px;}
+thead th{padding:10px 16px;text-align:left;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.7px;text-transform:uppercase;color:var(--tx3);background:#f0fdf8;border-bottom:1.5px solid var(--bdr);}
+tbody tr{transition:.15s;}
+tbody tr:hover{background:#f0fdf8;}
+tbody td{padding:11px 16px;font-size:13px;color:var(--tx2);border-bottom:1px solid var(--bdr2);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+.td-m{color:var(--tx);font-weight:600;}
+.tid{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--grn-d);font-weight:500;white-space:nowrap;}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:50px;font-size:11px;font-weight:600;white-space:nowrap;}
+.b-open{background:#fef2f2;color:#ef4444;}
+.b-prog{background:#fffbeb;color:#d97706;}
+.b-test{background:#ede9fe;color:#7c3aed;}
+.b-res{background:#ecfdf5;color:#059669;}
+.b-crit{background:#fef2f2;color:#dc2626;}
+.b-high{background:#fff7ed;color:#ea580c;}
+.b-med{background:#fefce8;color:#ca8a04;}
+.b-low{background:#f0fdf4;color:#16a34a;}
+.status-btn{display:inline-flex;align-items:center;gap:4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;cursor:pointer;border:none;transition:.15s;white-space:nowrap;}
+.sb-prog{background:#fffbeb;color:#d97706;}
+.sb-prog:hover{background:#fef3c7;}
+.sb-test{background:#ede9fe;color:#7c3aed;}
+.sb-test:hover{background:#ddd6fe;}
+.sb-res{background:#ecfdf5;color:#059669;}
+.sb-res:hover{background:#d1fae5;}
+.sb-view{background:var(--grn-l);color:var(--grn-d);}
+.sb-view:hover{background:#bbf7d0;}
+.act-list{padding:6px 18px 14px;}
+.ai{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--bdr2);}
+.ai:last-child{border-bottom:none;}
+.ai-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ai-ico svg{width:14px;height:14px;}
+.ai-txt{font-size:12.5px;color:var(--tx2);line-height:1.45;flex:1;}
+.ai-txt strong{color:var(--tx);}
+.ai-time{font-size:11px;color:var(--tx3);margin-top:1px;}
+.pipeline{display:flex;align-items:center;gap:0;margin-bottom:20px;}
+.pip-step{flex:1;text-align:center;padding:14px 10px;background:var(--w);border:1.5px solid var(--bdr);position:relative;}
+.pip-step:first-child{border-radius:12px 0 0 12px;}
+.pip-step:last-child{border-radius:0 12px 12px 0;}
+.pip-step+.pip-step{border-left:none;}
+.pip-step.active{background:var(--grn-l);border-color:var(--grn);}
+.pip-num{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--tx);line-height:1;}
+.pip-step.active .pip-num{color:var(--grn);}
+.pip-lbl{font-size:11.5px;color:var(--tx3);margin-top:3px;font-weight:500;}
+.pip-step.active .pip-lbl{color:var(--grn-d);font-weight:600;}
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:600;align-items:center;justify-content:center;}
+.mbg.open{display:flex;}
+.modal{background:var(--w);border-radius:18px;padding:28px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:mi .2s ease both;}
+@keyframes mi{from{opacity:0;transform:scale(.96) translateY(10px);}to{opacity:1;transform:none;}}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.mt{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;}
+.mc{width:30px;height:30px;border-radius:8px;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx2);transition:.15s;}
+.mc:hover{background:#fee2e2;color:var(--red);}
+.mc svg{width:14px;height:14px;}
+.dr{padding:10px 0;border-bottom:1px solid var(--bdr2);display:flex;gap:12px;}
+.dr:last-child{border-bottom:none;}
+.drl{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--tx3);min-width:110px;padding-top:2px;letter-spacing:.4px;text-transform:uppercase;}
+.drv{font-size:13px;color:var(--tx);flex:1;line-height:1.5;}
+.ssbox{border:1.5px dashed var(--bdr);border-radius:10px;background:var(--grn-l);height:80px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--tx2);font-size:12.5px;margin-top:8px;}
+.ssbox svg{width:20px;height:20px;color:var(--grn);}
+.ma{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--bdr2);}
+.flabel{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;display:block;}
+.cmt-inp{width:100%;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;padding:9px 13px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);outline:none;resize:none;margin-bottom:8px;transition:.2s;}
+.cmt-inp:focus{border-color:var(--grn);}
+.cmt-box{background:#f0fdf8;border:1px solid var(--bdr2);border-radius:8px;padding:9px 12px;margin-bottom:6px;font-size:12.5px;}
+.cmt-author{font-weight:600;color:var(--tx);}
+.cmt-time{font-size:11px;color:var(--tx3);margin-left:8px;}
+.cmt-text{color:var(--tx2);margin-top:3px;}
+#toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:999;}
+.tst{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:13px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.18);animation:tsin .25s ease both,tsout .4s ease 2.6s both;font-family:'DM Sans',sans-serif;min-width:220px;color:#fff;}
+.tst.success{background:#064e3b;}
+.tst.error{background:#7f1d1d;}
+.tst.info{background:#1e1b4b;}
+.tst svg{width:16px;height:16px;flex-shrink:0;}
+@keyframes tsin{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:none;}}
+@keyframes tsout{from{opacity:1;}to{opacity:0;}}
+.empty{padding:40px;text-align:center;color:var(--tx3);font-size:13px;}
+.profile-card{background:var(--w);border:1.5px solid var(--bdr);border-radius:16px;padding:24px;margin-bottom:16px;}
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bdr2);font-size:13px;}
+.stat-row:last-child{border-bottom:none;}
+.sr-l{color:var(--tx2);}
+.sr-v{font-weight:700;color:var(--tx);}
+</style>
+</head>
+<body>
+
+<!-- TOPNAV -->
+<header class="topnav">
+  <a href="#" class="logo">
+    <div class="logo-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+    <span class="logo-t">Bug<span>Tracker</span></span>
+  </a>
+  <div class="spacer"></div>
+  <div class="srch-wrap">
+    <div class="srch">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Search my bugs…" autocomplete="off">
+    </div>
+    <div class="srch-drop" id="searchDrop"></div>
+  </div>
+  <div class="ntf-wrap">
+    <div class="ntf-btn" onclick="toggleNotif()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="ntf-badge" id="ntfBadge"></span>
+    </div>
+    <div class="ntf-panel" id="ntfPanel">
+      <div class="ntf-head">
+        <span class="ntf-head-t">Notifications</span>
+        <button class="ntf-clear" onclick="markAllRead()">Mark all read</button>
+      </div>
+      <div class="ntf-scroll" id="ntfList"></div>
+    </div>
+  </div>
+  <span class="rb-dev">DEVELOPER</span>
+  <div class="chip">
+    <div class="av" id="userAv">JD</div>
+    <div><div class="un" id="userName">John Doe</div><div class="ur">Developer</div></div>
+  </div>
+  <a href="login.html" class="lo-btn" onclick="doLogout(event)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Logout
+  </a>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <span class="sl">Overview</span>
+  <a class="ni on" onclick="nav(this);show('dash')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </a>
+  <span class="sl">My Bugs</span>
+  <a class="ni" onclick="nav(this);show('mybugs')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    All Assigned <span class="nb" id="sb-all">0</span>
+  </a>
+  <a class="ni" onclick="nav(this);show('inprog')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-3.59"/></svg>
+    In Progress <span class="nb" id="sb-prog">0</span>
+  </a>
+  <a class="ni" onclick="nav(this);show('testing')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Testing <span class="nb" id="sb-test">0</span>
+  </a>
+  <a class="ni" onclick="nav(this);show('resolved')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Resolved <span class="nb" id="sb-res">0</span>
+  </a>
+  <span class="sl">Account</span>
+  <a class="ni" onclick="nav(this);show('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+    My Profile
+  </a>
+  <div class="sf">
+    <a class="ni" onclick="nav(this);show('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M4.93 4.93l1.41 1.41M1 12h2m18 0h2M12 1v2m0 18v2"/></svg>
+      Settings
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div id="s-dash" class="view">
+    <div class="ph">
+      <div><div class="ph-t">Developer Dashboard</div><div class="ph-s" id="dash-sub">Manage and resolve bugs assigned to you.</div></div>
+    </div>
+    <div class="stats" id="dashStats"></div>
+    <div class="pipeline" id="pipeline"></div>
+    <div class="panel">
+      <div class="panel-h">
+        <div><div class="panel-t">Recently Assigned to Me</div><div class="panel-s">Latest bugs admin assigned to you</div></div>
+        <a class="va" onclick="nav(document.querySelectorAll('.ni')[1]);show('mybugs')">View all →</a>
+      </div>
+      <div class="tbl-wrap" id="recentTbl"></div>
+    </div>
+  </div>
+
+  <div id="s-mybugs" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">All Assigned Bugs</div><div class="ph-s" id="mybugs-sub"></div></div></div>
+    <div class="panel"><div class="tbl-wrap" id="allTbl"></div></div>
+  </div>
+
+  <div id="s-inprog" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">In Progress</div><div class="ph-s">Bugs you are currently working on</div></div></div>
+    <div class="panel"><div class="tbl-wrap" id="progTbl"></div></div>
+  </div>
+
+  <div id="s-testing" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">Testing</div><div class="ph-s">Bugs ready for final verification</div></div></div>
+    <div class="panel"><div class="tbl-wrap" id="testTbl"></div></div>
+  </div>
+
+  <div id="s-resolved" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">Resolved</div><div class="ph-s">Bugs you have fixed and closed</div></div></div>
+    <div class="panel"><div class="tbl-wrap" id="resTbl"></div></div>
+  </div>
+
+  <div id="s-profile" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">My Profile</div><div class="ph-s">Your activity and performance overview</div></div></div>
+    <div class="profile-card">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+        <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:#fff;" id="profileAv">JD</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;" id="profileName">John Doe</div>
+          <div style="font-size:13px;color:var(--tx3);margin-top:2px;">Developer</div>
+        </div>
+        <div style="margin-left:auto;"><span class="badge b-res" style="font-size:12px;padding:5px 14px;">Developer Role</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;" id="profileStats"></div>
+    </div>
+    <div class="row2">
+      <div class="panel">
+        <div class="panel-h"><div><div class="panel-t">My Bug History</div></div></div>
+        <div class="tbl-wrap" id="profileTbl"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><div><div class="panel-t">Recent Activity</div></div></div>
+        <div class="act-list" id="profileFeed"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="s-settings" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">Settings</div><div class="ph-s">Manage your preferences</div></div></div>
+    <div class="panel">
+      <div class="panel-h"><div><div class="panel-t">Notification Preferences</div></div></div>
+      <div class="act-list">
+        <div class="ai"><div style="flex:1;font-size:13px;color:var(--tx2);">New bug assigned to me</div><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+        <div class="ai"><div style="flex:1;font-size:13px;color:var(--tx2);">Comment added to my bug</div><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+        <div class="ai"><div style="flex:1;font-size:13px;color:var(--tx2);">Bug priority changed</div><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+        <div class="ai"><div style="flex:1;font-size:13px;color:var(--tx2);">Admin messages</div><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- BUG DETAIL MODAL -->
+<div class="mbg" id="detailMod">
+  <div class="modal">
+    <div class="mh">
+      <div class="mt" id="dTitle">Bug Details</div>
+      <button class="mc" onclick="cm('detailMod')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="dBody"></div>
+    <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:12px;border:1.5px solid var(--bdr);">
+      <label class="flabel" style="margin-bottom:8px;">Update Status</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="status-btn sb-prog" onclick="changeStatus('In Progress')">▶ In Progress</button>
+        <button class="status-btn sb-test" onclick="changeStatus('Testing')">🔍 Testing</button>
+        <button class="status-btn sb-res"  onclick="changeStatus('Resolved')">✓ Resolved</button>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <label class="flabel">Comments</label>
+      <div id="dCmt" style="max-height:150px;overflow-y:auto;margin-bottom:8px;"></div>
+      <textarea class="cmt-inp" id="cmt-text" rows="2" placeholder="Add a comment or update note…"></textarea>
+      <button class="btn-p" style="width:100%;justify-content:center;" onclick="submitComment()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Send Comment
+      </button>
+    </div>
+    <div class="ma"><button class="btn-s" onclick="cm('detailMod')">Close</button></div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script>
+var API = '/api';
+var myName = 'Developer';
+var myToken = '';
+var cachedBugs = [];
+var currentBugId = null;
+
+// ── AUTH ──
+(function(){
+  var s = localStorage.getItem('bt_session');
+  var t = localStorage.getItem('bt_token');
+  if(!s||!t){ window.location.replace('login.html'); return; }
+  var u = JSON.parse(s);
+  if(u.role !== 'developer'){ window.location.replace('login.html'); return; }
+  myName  = u.name;
+  myToken = t;
+  var ini = myName.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+  document.getElementById('userAv').textContent      = ini;
+  document.getElementById('userName').textContent    = myName;
+  document.getElementById('profileAv').textContent   = ini;
+  document.getElementById('profileName').textContent = myName;
+  document.getElementById('dash-sub').textContent    = 'Welcome back, '+myName+'. Here are your assigned bugs.';
+})();
+window.addEventListener('pageshow', function(e){
+  if(e.persisted){ var s=localStorage.getItem('bt_session'); if(!s) window.location.replace('login.html'); }
+});
+
+function doLogout(e){
+  e.preventDefault();
+  localStorage.removeItem('bt_token');
+  localStorage.removeItem('bt_session');
+  window.location.replace('login.html');
+}
+
+// ── HELPERS ──
+function fmt(iso){ if(!iso)return'—'; var d=new Date(iso); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function ago(iso){ if(!iso)return'—'; var s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return s+'s ago'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }
+function sb(s){ var m={Open:'b-open','In Progress':'b-prog',Testing:'b-test',Resolved:'b-res',Closed:'b-res'}; return '<span class="badge '+(m[s]||'b-open')+'">'+s+'</span>'; }
+function pb(p){ var m={Critical:'b-crit',High:'b-high',Medium:'b-med',Low:'b-low'}; return '<span class="badge '+(m[p]||'b-med')+'">'+p+'</span>'; }
+
+// ── TOAST ──
+function toast(msg,type){
+  type=type||'success';
+  var t=document.createElement('div'); t.className='tst '+type;
+  t.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>'+msg+'</span>';
+  document.getElementById('toast-wrap').appendChild(t);
+  setTimeout(function(){t.remove();},3200);
+}
+function om(id){document.getElementById(id).classList.add('open');}
+function cm(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.mbg').forEach(function(m){m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.srch-wrap')) document.getElementById('searchDrop').classList.remove('open');
+  if(!e.target.closest('.ntf-wrap'))  document.getElementById('ntfPanel').classList.remove('open');
+});
+
+// ── API ──
+async function apiFetch(path, opts){
+  opts=opts||{};
+  opts.headers=Object.assign({'Content-Type':'application/json','Authorization':'Bearer '+myToken},opts.headers||{});
+  var res=await fetch(API+path,opts);
+  return res.json();
+}
+
+// ── LOAD MY BUGS ──
+async function loadMyBugs(){
+  try {
+    var data = await apiFetch('/bugs/mine');
+    cachedBugs = Array.isArray(data) ? data : [];
+  } catch(e){ cachedBugs=[]; }
+  return cachedBugs;
+}
+
+// ── NAV / SHOW ──
+function nav(el){ document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('on');}); el.classList.add('on'); }
+function show(s){
+  ['dash','mybugs','inprog','testing','resolved','profile','settings'].forEach(function(x){
+    var el=document.getElementById('s-'+x);
+    if(el){el.style.display='none';}
+  });
+  var t=document.getElementById('s-'+s);
+  if(t){t.style.display='block';t.classList.remove('view');void t.offsetWidth;t.classList.add('view');}
+  if(s==='dash')     renderDash();
+  if(s==='mybugs')   renderFiltered(null,'allTbl','mybugs-sub');
+  if(s==='inprog')   renderFiltered('In Progress','progTbl',null);
+  if(s==='testing')  renderFiltered('Testing','testTbl',null);
+  if(s==='resolved') renderFiltered('Resolved','resTbl',null);
+  if(s==='profile')  renderProfile();
+  updateCounts();
+}
+
+// ── SIDEBAR COUNTS ──
+function updateCounts(){
+  document.getElementById('sb-all').textContent  = cachedBugs.length;
+  document.getElementById('sb-prog').textContent = cachedBugs.filter(function(x){return x.status==='In Progress';}).length;
+  document.getElementById('sb-test').textContent = cachedBugs.filter(function(x){return x.status==='Testing';}).length;
+  document.getElementById('sb-res').textContent  = cachedBugs.filter(function(x){return x.status==='Resolved'||x.status==='Closed';}).length;
+}
+
+// ── DASHBOARD ──
+async function renderDash(){
+  var b = await loadMyBugs();
+  var tot=b.length,
+      prog=b.filter(function(x){return x.status==='In Progress';}).length,
+      test=b.filter(function(x){return x.status==='Testing';}).length,
+      res=b.filter(function(x){return x.status==='Resolved'||x.status==='Closed';}).length;
+
+  document.getElementById('dashStats').innerHTML=[
+    {cls:'s-asgn',v:tot,l:'Total Assigned',icon:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'},
+    {cls:'s-prog',v:prog,l:'In Progress',icon:'<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-3.59"/>'},
+    {cls:'s-test',v:test,l:'Testing',icon:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'},
+    {cls:'s-res', v:res, l:'Resolved',icon:'<polyline points="20 6 9 17 4 12"/>'}
+  ].map(function(c){
+    return '<div class="sc '+c.cls+'"><div class="sc-top"><div class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+c.icon+'</svg></div></div><div class="sc-v">'+c.v+'</div><div class="sc-l">'+c.l+'</div><div class="sc-bar"><div class="sc-fill" style="width:'+(tot?Math.round(c.v/tot*100):0)+'%"></div></div></div>';
+  }).join('');
+
+  document.getElementById('pipeline').innerHTML=[
+    {l:'Assigned',v:tot},{l:'In Progress',v:prog},{l:'Testing',v:test},{l:'Resolved',v:res}
+  ].map(function(p){
+    return '<div class="pip-step'+(p.v>0?' active':'')+'"><div class="pip-num">'+p.v+'</div><div class="pip-lbl">'+p.l+'</div></div>';
+  }).join('');
+
+  document.getElementById('recentTbl').innerHTML = bugTable(b.slice(0,5));
+  updateCounts();
+}
+
+// ── FILTERED VIEWS ──
+async function renderFiltered(status, tblId, subId){
+  var b = await loadMyBugs();
+  var filtered = status ? b.filter(function(x){
+    if(status==='Resolved') return x.status==='Resolved'||x.status==='Closed';
+    return x.status===status;
+  }) : b;
+  if(subId) document.getElementById(subId).textContent = filtered.length+' bug'+(filtered.length!==1?'s':'')+' assigned to '+myName;
+  document.getElementById(tblId).innerHTML = bugTable(filtered);
+}
+
+// ── BUG TABLE ──
+function bugTable(bugs){
+  if(!bugs.length) return '<div class="empty">No bugs found in this category.</div>';
+  var rows = bugs.map(function(b){
+    var actionBtn='';
+    if(b.status==='In Progress'||b.status==='Open'){
+      actionBtn='<button class="status-btn sb-test" onclick="quickStatus(\''+b.id+'\',\'Testing\')">→ Testing</button>';
+    } else if(b.status==='Testing'){
+      actionBtn='<button class="status-btn sb-res" onclick="quickStatus(\''+b.id+'\',\'Resolved\')">✓ Resolve</button>';
+    } else {
+      actionBtn='<span style="font-size:12px;color:var(--grn);font-weight:600;">✓ Done</span>';
+    }
+    return '<tr>'
+      +'<td class="tid">'+b.id+'</td>'
+      +'<td class="td-m" style="max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+b.title+'</td>'
+      +'<td>'+(b.project||'—')+'</td>'
+      +'<td>'+pb(b.priority)+'</td>'
+      +'<td>'+sb(b.status)+'</td>'
+      +'<td style="font-size:12px;color:var(--tx3);">'+(b.reporter||'—')+'</td>'
+      +'<td style="white-space:nowrap;font-size:11.5px;color:var(--tx3);">'+fmt(b.assigned_at||b.created_at)+'</td>'
+      +'<td style="white-space:nowrap;"><button class="status-btn sb-view" onclick="viewDetail(\''+b.id+'\')">View</button> '+actionBtn+'</td>'
+      +'</tr>';
+  }).join('');
+  return '<table><thead><tr><th>Bug ID</th><th>Title</th><th>Project</th><th>Priority</th><th>Status</th><th>Reporter</th><th>Assigned</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+// ── QUICK STATUS ──
+async function quickStatus(id, newStatus){
+  try {
+    var body = {status: newStatus};
+    if(newStatus==='Resolved') body.resolved_at = new Date().toISOString();
+    var res = await fetch(API+'/bugs/'+id,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+myToken},
+      body: JSON.stringify(body)
+    });
+    if(!res.ok){toast('Error updating status.','error');return;}
+    toast('Bug '+id+' → '+newStatus,'success');
+    await loadMyBugs();
+    updateCounts();
+    refreshCurrentView();
+  } catch(e){ toast('Error updating status.','error'); }
+}
+
+// ── VIEW DETAIL ──
+async function viewDetail(id){
+  currentBugId = id;
+  try {
+    var b = await apiFetch('/bugs/'+id);
+    document.getElementById('dTitle').textContent = b.id+' — '+b.title;
+    document.getElementById('dBody').innerHTML=
+      '<div class="dr"><div class="drl">Bug ID</div><div class="drv" style="font-family:\'DM Mono\',monospace;font-weight:600;color:var(--grn-d);">'+b.id+'</div></div>'
+      +'<div class="dr"><div class="drl">Project</div><div class="drv">'+(b.project||'—')+'</div></div>'
+      +'<div class="dr"><div class="drl">Priority</div><div class="drv">'+pb(b.priority)+'</div></div>'
+      +'<div class="dr"><div class="drl">Status</div><div class="drv">'+sb(b.status)+'</div></div>'
+      +'<div class="dr"><div class="drl">Reporter</div><div class="drv">'+(b.reporter||'—')+'</div></div>'
+      +'<div class="dr"><div class="drl">Assigned</div><div class="drv">'+fmt(b.assigned_at)+'</div></div>'
+      +'<div class="dr"><div class="drl">Environment</div><div class="drv">'+(b.environment||'—')+'</div></div>'
+      +'<div class="dr"><div class="drl">Browser</div><div class="drv">'+(b.browser||'—')+'</div></div>'
+      +'<div class="dr"><div class="drl">Description</div><div class="drv">'+(b.description||'—')+'</div></div>'
+      +(b.steps?'<div class="dr"><div class="drl">Steps</div><div class="drv" style="white-space:pre-line;">'+b.steps+'</div></div>':'')
+      +(b.screenshot?'<div class="ssbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Screenshot attached</div>':'');
+    var c = b.comments||[];
+    document.getElementById('dCmt').innerHTML = c.length
+      ? c.map(function(x){return '<div class="cmt-box"><span class="cmt-author">'+x.author+'</span><span class="cmt-time">'+ago(x.created_at)+'</span><div class="cmt-text">'+x.text+'</div></div>';}).join('')
+      : '<div style="color:var(--tx3);font-size:12.5px;padding:4px 0;">No comments yet.</div>';
+    document.getElementById('cmt-text').value='';
+    om('detailMod');
+  } catch(e){ toast('Could not load bug.','error'); }
+}
+
+// ── CHANGE STATUS FROM MODAL ──
+async function changeStatus(newStatus){
+  if(!currentBugId) return;
+  try {
+    var body = {status: newStatus};
+    if(newStatus==='Resolved') body.resolved_at = new Date().toISOString();
+    var res = await fetch(API+'/bugs/'+currentBugId,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+myToken},
+      body: JSON.stringify(body)
+    });
+    if(!res.ok){toast('Error updating status.','error');return;}
+    toast('Status updated to '+newStatus,'success');
+    await loadMyBugs();
+    updateCounts();
+    refreshCurrentView();
+    await viewDetail(currentBugId);
+  } catch(e){ toast('Error updating status.','error'); }
+}
+
+// ── COMMENT ──
+async function submitComment(){
+  var txt=document.getElementById('cmt-text').value.trim();
+  if(!txt||!currentBugId){toast('Write a comment first.','error');return;}
+  try {
+    await apiFetch('/bugs/'+currentBugId+'/comments',{method:'POST',body:JSON.stringify({text:txt})});
+    document.getElementById('cmt-text').value='';
+    await viewDetail(currentBugId);
+    toast('Comment added!','success');
+  } catch(e){ toast('Error adding comment.','error'); }
+}
+
+// ── PROFILE ──
+async function renderProfile(){
+  var b = await loadMyBugs();
+  var tot=b.length,
+      prog=b.filter(function(x){return x.status==='In Progress';}).length,
+      test=b.filter(function(x){return x.status==='Testing';}).length,
+      res=b.filter(function(x){return x.status==='Resolved'||x.status==='Closed';}).length;
+  document.getElementById('profileStats').innerHTML=[
+    ['Total Assigned',tot,'#10b981'],['In Progress',prog,'#f59e0b'],
+    ['Testing',test,'#8b5cf6'],['Resolved',res,'#4f46e5']
+  ].map(function(x){
+    return '<div style="background:var(--bg);border-radius:11px;padding:14px;border:1.5px solid var(--bdr);text-align:center;"><div style="font-family:\'Syne\',sans-serif;font-size:26px;font-weight:800;color:'+x[2]+';">'+x[1]+'</div><div style="font-size:12px;color:var(--tx3);margin-top:4px;">'+x[0]+'</div></div>';
+  }).join('');
+  document.getElementById('profileTbl').innerHTML = b.length
+    ? '<table><thead><tr><th>Bug ID</th><th>Title</th><th>Priority</th><th>Status</th><th>Assigned</th></tr></thead><tbody>'
+      +b.map(function(x){return '<tr><td class="tid">'+x.id+'</td><td class="td-m" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+x.title+'</td><td>'+pb(x.priority)+'</td><td>'+sb(x.status)+'</td><td style="font-size:11.5px;color:var(--tx3);">'+fmt(x.assigned_at||x.created_at)+'</td></tr>';}).join('')
+      +'</tbody></table>'
+    : '<div class="empty">No bugs assigned yet.</div>';
+  document.getElementById('profileFeed').innerHTML=b.slice(0,6).map(function(x){
+    var isRes=x.status==='Resolved'||x.status==='Closed';
+    return '<div class="ai"><div class="ai-ico" style="'+(isRes?'background:var(--grn-l);color:var(--grn);':'background:#fffbeb;color:#d97706;')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg></div><div style="flex:1;"><div class="ai-txt"><strong>'+x.id+'</strong> — '+(x.title.length>40?x.title.slice(0,40)+'…':x.title)+' '+sb(x.status)+'</div><div class="ai-time">'+fmt(x.assigned_at||x.created_at)+'</div></div></div>';
+  }).join('');
+}
+
+// ── SEARCH ──
+document.getElementById('searchInput').addEventListener('input',function(){
+  var q=this.value.trim().toLowerCase();
+  var drop=document.getElementById('searchDrop');
+  if(!q){drop.classList.remove('open');return;}
+  var results=cachedBugs.filter(function(b){
+    return b.id.toLowerCase().includes(q)||b.title.toLowerCase().includes(q)||(b.project&&b.project.toLowerCase().includes(q));
+  }).slice(0,8);
+  drop.innerHTML=results.length
+    ?results.map(function(b){return '<div class="sd-row" onclick="searchPick(\''+b.id+'\')">'+'<span class="sd-id">'+b.id+'</span><span class="sd-ttl">'+b.title+'</span>'+sb(b.status)+'</div>';}).join('')
+    :'<div class="sd-nil">No bugs found for "'+this.value+'"</div>';
+  drop.classList.add('open');
+});
+function searchPick(id){
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchDrop').classList.remove('open');
+  viewDetail(id);
+}
+
+// ── NOTIFICATIONS ──
+async function renderNotifs(){
+  try {
+    var notifs = await apiFetch('/notifications');
+    var unread=notifs.filter(function(n){return !n.is_read;}).length;
+    var badge=document.getElementById('ntfBadge');
+    if(unread>0){badge.textContent=unread>9?'9+':unread;badge.classList.add('on');}
+    else badge.classList.remove('on');
+    var list=document.getElementById('ntfList');
+    if(!notifs.length){list.innerHTML='<div class="ntf-nil">No notifications yet.</div>';return;}
+    var styles={
+      assigned:'background:var(--grn-l);color:var(--grn-d);',
+      resolved:'background:var(--grn-l);color:var(--grn-d);',
+      update:'background:#fffbeb;color:#d97706;',
+      comment:'background:#ede9fe;color:#7c3aed;',
+      info:'background:#eef2ff;color:#4f46e5;'
+    };
+    list.innerHTML=notifs.map(function(n){
+      var st=styles[n.type]||styles.info;
+      return '<div class="ntf-row'+(n.is_read?'':' unread')+'" onclick="ntfClick(\''+n.bug_id+'\')">'
+        +'<div class="ntf-ico" style="'+st+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>'
+        +'<div style="flex:1;"><div class="ntf-msg">'+n.message+'</div><div class="ntf-when">'+ago(n.created_at)+'</div></div>'
+        +(n.is_read?'':'<div class="ntf-dot"></div>')
+        +'</div>';
+    }).join('');
+  } catch(e){}
+}
+function toggleNotif(){
+  var p=document.getElementById('ntfPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')) renderNotifs();
+}
+async function markAllRead(){
+  await apiFetch('/notifications/read',{method:'PUT'});
+  renderNotifs();
+  toast('All notifications read','info');
+}
+function ntfClick(bugId){
+  document.getElementById('ntfPanel').classList.remove('open');
+  if(bugId) viewDetail(bugId);
+}
+
+// ── REFRESH CURRENT VIEW ──
+function refreshCurrentView(){
+  var on=document.querySelector('.ni.on');
+  if(!on) return;
+  var txt=on.textContent.trim().toLowerCase();
+  if(txt.includes('dashboard'))    renderDash();
+  else if(txt.includes('all'))     renderFiltered(null,'allTbl','mybugs-sub');
+  else if(txt.includes('progress'))renderFiltered('In Progress','progTbl',null);
+  else if(txt.includes('testing')) renderFiltered('Testing','testTbl',null);
+  else if(txt.includes('resolved'))renderFiltered('Resolved','resTbl',null);
+  else if(txt.includes('profile')) renderProfile();
+}
+
+// ── INIT ──
+renderDash();
+renderNotifs();
+setInterval(function(){ renderNotifs(); updateCounts(); }, 5000);
+</script>
+</body>
+</html>

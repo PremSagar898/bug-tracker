@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tester — BugTracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --sw:240px;--nh:64px;
+  --bg:#fdf8f0;--w:#fff;
+  --bdr:#fde68a;--bdr2:#fef3c7;
+  --ind:#f59e0b;--ind-d:#d97706;--il:#fffbeb;
+  --tx:#111827;--tx2:#6b7280;--tx3:#9ca3af;
+  --red:#ef4444;--grn:#10b981;--pur:#8b5cf6;
+  --sb:#78350f;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
+.topnav{position:fixed;top:0;left:0;right:0;height:var(--nh);background:var(--w);border-bottom:1.5px solid var(--bdr);display:flex;align-items:center;padding:0 22px 0 0;z-index:300;gap:12px;}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;width:var(--sw);padding:0 18px;border-right:1.5px solid var(--bdr);height:100%;flex-shrink:0;}
+.logo-i{width:34px;height:34px;background:var(--ind);border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.logo-i svg{width:17px;height:17px;color:#fff;}
+.logo-t{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--tx);letter-spacing:-.2px;}
+.logo-t span{color:var(--ind);}
+.spacer{flex:1;}
+.srch-wrap{position:relative;}
+.srch{display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;padding:8px 13px;width:240px;transition:.2s;}
+.srch:focus-within{border-color:var(--ind);background:var(--w);box-shadow:0 0 0 3px rgba(245,158,11,.12);}
+.srch svg{width:14px;height:14px;color:var(--tx3);flex-shrink:0;}
+.srch input{background:none;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);width:100%;}
+.srch input::placeholder{color:var(--tx3);}
+.search-dropdown{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--w);border:1.5px solid var(--bdr);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.1);z-index:400;max-height:280px;overflow-y:auto;}
+.search-dropdown.open{display:block;}
+.sd-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--bdr2);transition:.15s;}
+.sd-item:last-child{border-bottom:none;}
+.sd-item:hover{background:var(--il);}
+.sd-id{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--ind-d);min-width:80px;}
+.sd-title{font-size:12.5px;color:var(--tx);font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sd-empty{padding:16px;text-align:center;font-size:13px;color:var(--tx3);}
+.ntf-wrap{position:relative;}
+.ntf{position:relative;width:38px;height:38px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;}
+.ntf:hover{background:var(--il);border-color:var(--ind);}
+.ntf svg{width:16px;height:16px;color:var(--tx2);}
+.ntf-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;background:var(--red);border-radius:9px;border:2px solid var(--w);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;padding:0 4px;display:none;}
+.ntf-badge.show{display:flex;}
+.ntf-panel{display:none;position:absolute;top:calc(100% + 10px);right:0;width:340px;background:var(--w);border:1.5px solid var(--bdr);border-radius:14px;box-shadow:0 16px 44px rgba(0,0,0,.13);z-index:500;overflow:hidden;}
+.ntf-panel.open{display:block;animation:fadeDown .18s ease both;}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+.ntf-ph{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;border-bottom:1px solid var(--bdr2);}
+.ntf-ph-title{font-size:14px;font-weight:700;}
+.ntf-mark{font-size:11.5px;color:var(--ind);font-weight:600;cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;}
+.ntf-mark:hover{text-decoration:underline;}
+.ntf-list{max-height:300px;overflow-y:auto;}
+.ntf-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bdr2);transition:.15s;cursor:pointer;}
+.ntf-item:last-child{border-bottom:none;}
+.ntf-item:hover{background:var(--il);}
+.ntf-item.unread{background:#fffdf5;}
+.ntf-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ntf-ico svg{width:14px;height:14px;}
+.ntf-txt{font-size:12.5px;color:var(--tx2);line-height:1.45;flex:1;}
+.ntf-txt strong{color:var(--tx);font-weight:600;}
+.ntf-time{font-size:10.5px;color:var(--tx3);margin-top:2px;}
+.ntf-dot{width:7px;height:7px;background:var(--ind);border-radius:50%;margin-top:4px;flex-shrink:0;}
+.ntf-empty{padding:24px;text-align:center;font-size:13px;color:var(--tx3);}
+.rb{font-size:10px;font-weight:700;padding:3px 9px;border-radius:50px;background:#fffbeb;color:#d97706;letter-spacing:.3px;font-family:'DM Mono',monospace;}
+.chip{display:flex;align-items:center;gap:9px;padding:5px 11px 5px 5px;border-radius:11px;border:1.5px solid var(--bdr);cursor:pointer;background:var(--w);transition:.2s;}
+.chip:hover{background:var(--il);border-color:var(--ind);}
+.av{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;font-family:'DM Mono',monospace;}
+.un{font-size:13px;font-weight:600;color:var(--tx);}
+.ur{font-size:11px;color:var(--tx3);}
+.lo{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:#fef2f2;border:1.5px solid #fecaca;color:var(--red);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:.2s;}
+.lo:hover{background:#fee2e2;}
+.lo svg{width:14px;height:14px;}
+.sidebar{position:fixed;top:var(--nh);left:0;width:var(--sw);height:calc(100vh - var(--nh));background:var(--sb);padding:18px 12px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
+.sl{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#92400e;padding:10px 10px 4px;margin-top:4px;}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;text-decoration:none;color:#fde68a;font-size:13.5px;font-weight:500;transition:.18s;}
+.ni:hover{background:#92400e;color:#fff;}
+.ni.on{background:var(--ind);color:#fff;font-weight:600;}
+.ni svg{width:15px;height:15px;flex-shrink:0;}
+.nb{margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;padding:2px 7px;border-radius:50px;background:rgba(239,68,68,.25);color:#fca5a5;}
+.ni.on .nb{background:rgba(255,255,255,.2);color:#fff;}
+.sf{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);}
+.sf .ni{color:#92400e;}
+.main{margin-left:var(--sw);margin-top:var(--nh);padding:26px 26px 52px;}
+.view{animation:fadeUp .3s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;}
+.ph-t{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.4px;}
+.ph-s{font-size:12.5px;color:var(--tx3);margin-top:3px;}
+.br{display:flex;gap:9px;}
+.bp{display:flex;align-items:center;gap:6px;padding:9px 18px;background:var(--ind);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(245,158,11,.3);transition:.2s;}
+.bp:hover{background:var(--ind-d);transform:translateY(-1px);}
+.bp svg{width:14px;height:14px;}
+.bs{display:flex;align-items:center;gap:6px;padding:9px 14px;background:var(--w);color:var(--tx2);border:1.5px solid var(--bdr);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;}
+.bs:hover{background:var(--il);color:var(--ind);border-color:var(--ind);}
+.bs svg{width:14px;height:14px;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px;}
+.sc{background:var(--w);border-radius:16px;padding:20px;border:1.5px solid var(--bdr);position:relative;overflow:hidden;transition:.22s;}
+.sc:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.08);}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;}
+.sc.ct::before{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+.sc.co::before{background:linear-gradient(90deg,#ef4444,#f87171);}
+.sc.cp::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa);}
+.sc.cr::before{background:linear-gradient(90deg,#10b981,#34d399);}
+.sc-tp{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.sc-ic{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;}
+.sc-ic svg{width:20px;height:20px;}
+.sc.ct .sc-ic{background:#fffbeb;color:#f59e0b;}
+.sc.co .sc-ic{background:#fef2f2;color:#ef4444;}
+.sc.cp .sc-ic{background:#ede9fe;color:#7c3aed;}
+.sc.cr .sc-ic{background:#ecfdf5;color:#10b981;}
+.sc-v{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--tx);letter-spacing:-1px;line-height:1;}
+.sc-l{font-size:12px;color:var(--tx3);margin-top:4px;font-weight:500;}
+.sc-bar{height:3px;background:#fef9ee;border-radius:3px;margin-top:16px;overflow:hidden;}
+.sc-f{height:100%;border-radius:3px;transition:width .5s ease;}
+.sc.ct .sc-f{background:#f59e0b;}
+.sc.co .sc-f{background:#ef4444;}
+.sc.cp .sc-f{background:#8b5cf6;}
+.sc.cr .sc-f{background:#10b981;}
+.panel{background:var(--w);border-radius:16px;border:1.5px solid var(--bdr);overflow:hidden;margin-bottom:16px;}
+.ph2{padding:15px 20px;border-bottom:1px solid var(--bdr2);display:flex;align-items:center;justify-content:space-between;}
+.pt{font-size:14px;font-weight:700;}
+.ps{font-size:11.5px;color:var(--tx3);margin-top:2px;}
+.va{font-size:12px;color:var(--ind);font-weight:600;cursor:pointer;text-decoration:none;}
+.va:hover{text-decoration:underline;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:700px;}
+thead th{padding:10px 16px;text-align:left;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.7px;text-transform:uppercase;color:var(--tx3);background:#fffdf5;border-bottom:1px solid var(--bdr);}
+tbody tr{transition:.15s;}
+tbody tr:hover{background:#fffdf5;}
+tbody td{padding:11px 16px;font-size:13px;color:var(--tx2);border-bottom:1px solid #fef9ee;vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+.td-m{color:var(--tx);font-weight:600;}
+.tid{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--ind-d);font-weight:500;white-space:nowrap;}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:50px;font-size:11px;font-weight:600;white-space:nowrap;}
+.b-open{background:#fef2f2;color:#ef4444;}
+.b-prog{background:#fffbeb;color:#d97706;}
+.b-test{background:#ede9fe;color:#7c3aed;}
+.b-res{background:#ecfdf5;color:#059669;}
+.b-una{background:#f3f4f6;color:#6b7280;}
+.b-crit{background:#fef2f2;color:#dc2626;}
+.b-high{background:#fff7ed;color:#ea580c;}
+.b-med{background:#fefce8;color:#ca8a04;}
+.b-low{background:#f0fdf4;color:#16a34a;}
+.form-section{background:var(--w);border-radius:16px;border:1.5px solid var(--bdr);overflow:hidden;margin-bottom:20px;}
+.form-body{padding:22px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;}
+.fg{display:flex;flex-direction:column;}
+.fg.full{grid-column:1/-1;}
+.fl{display:block;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:#555;margin-bottom:7px;}
+.iw{display:flex;align-items:center;background:#fdfaf2;border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;transition:.2s;}
+.iw:focus-within{border-color:var(--ind);background:var(--w);box-shadow:0 0 0 3px rgba(245,158,11,.12);}
+.iico{display:flex;align-items:center;justify-content:center;width:38px;flex-shrink:0;color:#fbbf24;}
+.iico svg{width:14px;height:14px;}
+.idiv{width:1px;height:17px;background:var(--bdr);flex-shrink:0;}
+.ifield{flex:1;background:transparent;border:none;outline:none;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);min-width:0;}
+.ifield::placeholder{color:#d1b87a;}
+.isel{flex:1;background:transparent;border:none;outline:none;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);cursor:pointer;-webkit-appearance:none;}
+.ita{width:100%;background:#fdfaf2;border:1.5px solid var(--bdr);border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);outline:none;resize:vertical;min-height:90px;transition:.2s;}
+.ita:focus{border-color:var(--ind);background:var(--w);box-shadow:0 0 0 3px rgba(245,158,11,.12);}
+.ita::placeholder{color:#d1b87a;}
+.upzone{border:2px dashed #fbbf24;border-radius:11px;background:#fffdf5;padding:26px;text-align:center;cursor:pointer;transition:.2s;position:relative;}
+.upzone:hover,.upzone.drag{border-color:var(--ind);background:var(--il);}
+.upzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.up-ic{width:42px;height:42px;border-radius:11px;background:var(--il);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;}
+.up-ic svg{width:20px;height:20px;color:var(--ind);}
+.up-t{font-size:13px;font-weight:600;color:var(--tx2);margin-bottom:3px;}
+.up-s{font-size:11.5px;color:var(--tx3);}
+.previews{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.prev{position:relative;width:68px;height:68px;border-radius:8px;overflow:hidden;border:1.5px solid var(--bdr);}
+.prev img{width:100%;height:100%;object-fit:cover;}
+.prev-del{position:absolute;top:3px;right:3px;width:17px;height:17px;background:rgba(0,0,0,.55);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:10px;border:none;}
+.fa{display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--bdr2);margin-top:16px;}
+.bug-id-preview{display:inline-flex;align-items:center;gap:6px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:6px 12px;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:#d97706;margin-bottom:16px;}
+.bug-id-preview svg{width:13px;height:13px;}
+.ov-card{background:var(--w);border-radius:16px;border:1.5px solid var(--bdr);padding:20px;margin-bottom:16px;}
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #fef9ee;font-size:13px;}
+.stat-row:last-child{border-bottom:none;}
+.act-list{padding:8px 18px 16px;}
+.ai{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid #fef9ee;}
+.ai:last-child{border-bottom:none;}
+.ai-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ai-ico svg{width:14px;height:14px;}
+.ai-tx{font-size:12.5px;color:var(--tx2);line-height:1.45;}
+.ai-tx strong{color:var(--tx);}
+.ai-time{font-size:11px;color:var(--tx3);margin-top:1px;}
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:600;align-items:center;justify-content:center;}
+.mbg.open{display:flex;}
+.modal{background:var(--w);border-radius:18px;padding:28px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.18);animation:modalIn .2s ease both;}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(10px);}to{opacity:1;transform:none;}}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.mt2{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;}
+.mc{width:30px;height:30px;border-radius:8px;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tx2);transition:.15s;}
+.mc:hover{background:#fee2e2;color:var(--red);}
+.mc svg{width:14px;height:14px;}
+.dr{padding:10px 0;border-bottom:1px solid #fef9ee;display:flex;gap:12px;}
+.dr:last-child{border-bottom:none;}
+.drl{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--tx3);min-width:110px;padding-top:2px;letter-spacing:.4px;}
+.drv{font-size:13px;color:var(--tx);flex:1;line-height:1.5;}
+.ssbox{border:1.5px dashed #fbbf24;border-radius:10px;background:#fffdf5;height:90px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--tx2);font-size:12.5px;margin-top:8px;}
+.ssbox svg{width:20px;height:20px;color:var(--ind);}
+.ma{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--bdr2);}
+.cmt-inp{width:100%;background:#fdfaf2;border:1.5px solid var(--bdr);border-radius:10px;padding:9px 13px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);outline:none;resize:none;margin-bottom:8px;transition:.2s;}
+.cmt-inp:focus{border-color:var(--ind);}
+.success-modal{text-align:center;padding:10px 0;}
+.sm-ico{width:64px;height:64px;background:#ecfdf5;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.sm-ico svg{width:30px;height:30px;color:#10b981;}
+.sm-id{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--ind-d);margin:10px 0 6px;}
+.sm-title{font-size:16px;font-weight:700;color:var(--tx);margin-bottom:6px;}
+.sm-sub{font-size:13px;color:var(--tx3);line-height:1.5;}
+#toast-container{position:fixed;bottom:26px;right:26px;display:flex;flex-direction:column;gap:10px;z-index:999;}
+.toast{display:flex;align-items:center;gap:10px;background:#78350f;color:#fff;padding:12px 18px;border-radius:13px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:slideIn .25s ease both,fadeOut .4s ease 2.6s both;font-family:'DM Sans',sans-serif;min-width:240px;}
+.toast.success{background:#064e3b;}
+.toast.error{background:#7f1d1d;}
+.toast.info{background:#1e3a5f;}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:none;}}
+@keyframes fadeOut{from{opacity:1;}to{opacity:0;}}
+.toast-ico{width:20px;height:20px;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<!-- TOPNAV -->
+<header class="topnav">
+  <a href="#" class="logo">
+    <div class="logo-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+    <span class="logo-t">Bug<span>Tracker</span></span>
+  </a>
+  <div class="spacer"></div>
+  <div class="srch-wrap">
+    <div class="srch">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Search bug ID or title…" autocomplete="off">
+    </div>
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+  <div class="ntf-wrap">
+    <div class="ntf" id="ntfBtn" onclick="toggleNotifPanel()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="ntf-badge" id="ntfBadge"></span>
+    </div>
+    <div class="ntf-panel" id="ntfPanel">
+      <div class="ntf-ph">
+        <span class="ntf-ph-title">Notifications</span>
+        <button class="ntf-mark" onclick="markAllRead()">Mark all read</button>
+      </div>
+      <div class="ntf-list" id="ntfList"></div>
+    </div>
+  </div>
+  <span class="rb">TESTER</span>
+  <div class="chip">
+    <div class="av" id="userAv">ST</div>
+    <div><div class="un" id="userName">Sarah Thomas</div><div class="ur">QA Tester</div></div>
+  </div>
+  <a href="login.html" class="lo" onclick="doLogout(event)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Logout
+  </a>
+</header>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <span class="sl">Overview</span>
+  <a class="ni on" onclick="nav(this);show('dash')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </a>
+  <span class="sl">Bug Reporting</span>
+  <a class="ni" onclick="nav(this);show('report')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Report New Bug
+  </a>
+  <a class="ni" onclick="nav(this);show('mybugs')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    My Bug Reports<span class="nb" id="my-cnt">0</span>
+  </a>
+  <span class="sl">Profile</span>
+  <a class="ni" onclick="nav(this);show('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+    My Profile
+  </a>
+  <div class="sf">
+    <a class="ni" onclick="nav(this);show('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M4.93 4.93l1.41 1.41M1 12h2m18 0h2M12 1v2m0 18v2"/></svg>
+      Settings
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div id="s-dash" class="view">
+    <div class="ph">
+      <div><div class="ph-t">Tester Dashboard</div><div class="ph-s">Report bugs and track their resolution status.</div></div>
+      <div class="br">
+        <button class="bp" onclick="show('report');nav(document.querySelectorAll('.ni')[1])">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Report New Bug
+        </button>
+      </div>
+    </div>
+    <div class="stats" id="statsGrid"></div>
+    <div class="panel">
+      <div class="ph2">
+        <div><div class="pt">My Recent Bug Reports</div><div class="ps">Latest bugs submitted by me</div></div>
+        <a class="va" onclick="show('mybugs');nav(document.querySelectorAll('.ni')[2])">View all</a>
+      </div>
+      <div class="tbl-wrap" id="recentTbl"></div>
+    </div>
+  </div>
+
+  <div id="s-report" class="view" style="display:none;">
+    <div class="ph">
+      <div><div class="ph-t">Report a Bug</div><div class="ph-s">Describe the issue clearly and attach screenshots.</div></div>
+    </div>
+    <div class="bug-id-preview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Bug ID will be assigned on submission
+    </div>
+    <div class="form-section">
+      <div class="ph2"><div><div class="pt">New Bug Report</div><div class="ps">All fields marked * are required</div></div></div>
+      <div class="form-body">
+        <div class="form-grid">
+          <div class="fg full">
+            <label class="fl">Bug Title *</label>
+            <div class="iw">
+              <div class="iico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg></div>
+              <div class="idiv"></div>
+              <input class="ifield" id="f-title" type="text" placeholder="e.g. Login button not working on Safari 17">
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">Project / Module *</label>
+            <div class="iw">
+              <div class="iico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/></svg></div>
+              <div class="idiv"></div>
+              <select class="isel" id="f-project">
+                <option value="">— Select —</option>
+                <option>Web App</option><option>API</option><option>Auth</option>
+                <option>Reporting</option><option>Mobile</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">Priority *</label>
+            <div class="iw">
+              <div class="iico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></div>
+              <div class="idiv"></div>
+              <select class="isel" id="f-priority">
+                <option value="">— Select —</option>
+                <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">Environment</label>
+            <div class="iw">
+              <div class="iico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></div>
+              <div class="idiv"></div>
+              <select class="isel" id="f-env"><option>Production</option><option>Staging</option><option>Development</option></select>
+            </div>
+          </div>
+          <div class="fg">
+            <label class="fl">Browser / Device</label>
+            <div class="iw">
+              <div class="iico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/></svg></div>
+              <div class="idiv"></div>
+              <input class="ifield" id="f-browser" type="text" placeholder="e.g. Chrome 120, iPhone 14">
+            </div>
+          </div>
+          <div class="fg full">
+            <label class="fl">Description *</label>
+            <textarea class="ita" id="f-desc" placeholder="What happened? What did you expect vs what actually occurred?"></textarea>
+          </div>
+          <div class="fg full">
+            <label class="fl">Steps to Reproduce</label>
+            <textarea class="ita" id="f-steps" placeholder="1. Go to login page&#10;2. Enter valid credentials&#10;3. Click Sign In&#10;4. Observe error…" style="min-height:80px;"></textarea>
+          </div>
+          <div class="fg full">
+            <label class="fl">Screenshots / Attachments</label>
+            <div class="upzone" id="upzone" ondragover="dragOv(event)" ondragleave="dragOut()" ondrop="dropFiles(event)">
+              <input type="file" multiple accept="image/*" onchange="handleFiles(this.files)">
+              <div class="up-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+              <div class="up-t">Drag & drop screenshots here</div>
+              <div class="up-s">or click to browse — PNG, JPG up to 10MB each</div>
+              <div class="previews" id="prevs"></div>
+            </div>
+          </div>
+        </div>
+        <div class="fa">
+          <button class="bs" onclick="clearForm()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
+            Clear
+          </button>
+          <button class="bp" id="submitBtn" onclick="submitBug()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit Bug Report
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="s-mybugs" class="view" style="display:none;">
+    <div class="ph">
+      <div><div class="ph-t">My Bug Reports</div><div class="ph-s" id="mybugs-sub">All bugs submitted by me</div></div>
+      <div class="br">
+        <button class="bp" onclick="show('report');nav(document.querySelectorAll('.ni')[1])">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Report New Bug
+        </button>
+      </div>
+    </div>
+    <div class="panel"><div class="tbl-wrap" id="myTbl"></div></div>
+  </div>
+
+  <div id="s-profile" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">My Profile</div><div class="ph-s">Overview of your activity and bug reporting stats.</div></div></div>
+    <div class="ov-card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+        <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:#fff;" id="profileAv">ST</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;" id="profileName">Sarah Thomas</div>
+          <div style="font-size:13px;color:var(--tx3);margin-top:2px;">QA Tester</div>
+        </div>
+        <div style="margin-left:auto;"><span class="badge" style="background:#fffbeb;color:#d97706;font-size:12px;padding:5px 12px;">Tester Role</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;" id="profileStats"></div>
+    </div>
+    <div class="row2">
+      <div class="panel"><div class="ph2"><div><div class="pt">My Bug Activity</div></div></div><div id="actTbl"></div></div>
+      <div class="panel"><div class="ph2"><div><div class="pt">Recent Activity</div></div></div><div class="act-list" id="actFeed"></div></div>
+    </div>
+  </div>
+
+  <div id="s-settings" class="view" style="display:none;">
+    <div class="ph"><div><div class="ph-t">Settings</div><div class="ph-s">Manage your preferences.</div></div></div>
+    <div class="ov-card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:16px;">Notification Preferences</div>
+      <div class="stat-row"><span class="sr-l">Bug status updates</span><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+      <div class="stat-row"><span class="sr-l">Bug assigned notifications</span><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+      <div class="stat-row"><span class="sr-l">Comment notifications</span><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+      <div class="stat-row"><span class="sr-l">Resolved bug alerts</span><span style="font-size:13px;font-weight:600;color:var(--grn);">Enabled</span></div>
+    </div>
+  </div>
+</main>
+
+<!-- BUG DETAIL MODAL -->
+<div class="mbg" id="detailMod">
+  <div class="modal">
+    <div class="mh">
+      <div class="mt2" id="dTitle">Bug Details</div>
+      <button class="mc" onclick="cm('detailMod')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="dBody"></div>
+    <div style="margin-top:16px;">
+      <label style="display:block;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:#555;margin-bottom:8px;">Comments</label>
+      <div id="dCmt" style="max-height:120px;overflow-y:auto;margin-bottom:8px;"></div>
+      <textarea class="cmt-inp" id="cmt-text" rows="2" placeholder="Add a comment…"></textarea>
+      <button class="bp" style="width:100%;justify-content:center;" onclick="addComment()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Send Comment
+      </button>
+    </div>
+    <div class="ma"><button class="bs" onclick="cm('detailMod')">Close</button></div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="mbg" id="successMod">
+  <div class="modal" style="width:420px;">
+    <div class="success-modal">
+      <div class="sm-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="sm-title">Bug Report Submitted!</div>
+      <div class="sm-id" id="successId">BUG-0000</div>
+      <div class="sm-sub">Your bug has been successfully submitted and added to the admin's inbox. You'll receive a notification when its status changes.</div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;">
+        <button class="bs" onclick="cm('successMod')">Close</button>
+        <button class="bp" onclick="cm('successMod');show('mybugs');nav(document.querySelectorAll('.ni')[2]);">
+          View My Bugs →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ── CONFIG ──
+var API = '/api';
+var myName = 'Tester';
+var myToken = '';
+var cachedBugs = [];
+var currentDetailId = null;
+var hasScreenshot = false;
+
+// ── AUTH ──
+(function(){
+  var s = localStorage.getItem('bt_session');
+  var t = localStorage.getItem('bt_token');
+  if(!s || !t){ window.location.replace('login.html'); return; }
+  var u = JSON.parse(s);
+  if(u.role !== 'tester'){ window.location.replace('login.html'); return; }
+  myName  = u.name;
+  myToken = t;
+  var ini = myName.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+  document.getElementById('userAv').textContent   = ini;
+  document.getElementById('userName').textContent = myName;
+  document.getElementById('profileAv').textContent   = ini;
+  document.getElementById('profileName').textContent = myName;
+})();
+window.addEventListener('pageshow', function(e){
+  if(e.persisted){
+    var s = localStorage.getItem('bt_session');
+    if(!s) window.location.replace('login.html');
+  }
+});
+
+// ── LOGOUT ──
+function doLogout(e){
+  e.preventDefault();
+  localStorage.removeItem('bt_token');
+  localStorage.removeItem('bt_session');
+  window.location.replace('login.html');
+}
+
+// ── NAV / SHOW ──
+function nav(el){ document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('on');}); el.classList.add('on'); }
+function show(s){
+  ['dash','report','mybugs','profile','settings'].forEach(function(x){
+    var el=document.getElementById('s-'+x);
+    if(el){el.style.display='none';el.classList.remove('view');}
+  });
+  var t=document.getElementById('s-'+s);
+  if(t){t.style.display='block';void t.offsetWidth;t.classList.add('view');}
+  if(s==='dash')    rDash();
+  if(s==='mybugs')  rMyBugs();
+  if(s==='profile') rProfile();
+}
+function om(id){document.getElementById(id).classList.add('open');}
+function cm(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.mbg').forEach(function(m){
+  m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.srch-wrap')) document.getElementById('searchDropdown').classList.remove('open');
+  if(!e.target.closest('.ntf-wrap'))  document.getElementById('ntfPanel').classList.remove('open');
+});
+
+// ── TOAST ──
+function toast(msg, type){
+  type = type||'success';
+  var icons = {
+    success:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    error:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>',
+    info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>'
+  };
+  var t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML='<span class="toast-ico">'+icons[type]+'</span><span>'+msg+'</span>';
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(function(){t.remove();},3100);
+}
+
+// ── HELPERS ──
+function fmt(iso){ if(!iso)return'—'; var d=new Date(iso); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function ago(iso){ if(!iso)return'—'; var s=Math.floor((Date.now()-new Date(iso))/1000); if(s<60)return s+'s ago'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }
+function sb(s){ var m={Open:'b-open','In Progress':'b-prog',Testing:'b-test',Resolved:'b-res',Closed:'b-res'}; return '<span class="badge '+(m[s]||'b-open')+'">'+s+'</span>'; }
+function pb(p){ var m={Critical:'b-crit',High:'b-high',Medium:'b-med',Low:'b-low'}; return '<span class="badge '+(m[p]||'b-med')+'">'+p+'</span>'; }
+
+// ── API FETCH ──
+async function apiFetch(path, opts){
+  opts = opts||{};
+  opts.headers = Object.assign({'Content-Type':'application/json','Authorization':'Bearer '+myToken}, opts.headers||{});
+  var res = await fetch(API+path, opts);
+  return res.json();
+}
+
+// ── LOAD MY BUGS FROM API ──
+async function loadMyBugs(){
+  try {
+    var data = await apiFetch('/bugs/mine');
+    cachedBugs = Array.isArray(data) ? data : [];
+  } catch(e){ cachedBugs = []; }
+  return cachedBugs;
+}
+
+// ── STAT CARDS ──
+async function rStats(){
+  var b = await loadMyBugs();
+  var tot=b.length,
+      op=b.filter(function(x){return x.status==='Open';}).length,
+      pr=b.filter(function(x){return x.status==='In Progress'||x.status==='Testing';}).length,
+      rs=b.filter(function(x){return x.status==='Resolved'||x.status==='Closed';}).length;
+  document.getElementById('statsGrid').innerHTML=
+    ['ct|Total Submitted|'+tot+'|100',
+     'co|Open|'+op+'|'+(tot?Math.round(op/tot*100):0),
+     'cp|In Progress|'+pr+'|'+(tot?Math.round(pr/tot*100):0),
+     'cr|Resolved|'+rs+'|'+(tot?Math.round(rs/tot*100):0)
+    ].map(function(d){
+      var p=d.split('|');
+      return '<div class="sc '+p[0]+'"><div class="sc-tp"><div class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></div></div><div class="sc-v">'+p[2]+'</div><div class="sc-l">'+p[1]+'</div><div class="sc-bar"><div class="sc-f" style="width:'+p[3]+'%"></div></div></div>';
+    }).join('');
+  document.getElementById('my-cnt').textContent = tot;
+  return b;
+}
+
+// ── TABLE HTML ──
+function tblHTML(bugs){
+  if(!bugs.length) return '<div style="padding:40px;text-align:center;color:var(--tx3);font-size:13px;">No bug reports found.</div>';
+  var rows = bugs.map(function(b){
+    var viewBtn = '<button onclick="viewDetail(\''+b.id+'\')" style="background:var(--il);color:var(--ind-d);border:1.5px solid var(--bdr);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:12px;font-weight:600;padding:5px 12px;cursor:pointer;">View</button>';
+    var assigned = b.assigned_to ? b.assigned_to : '<span style="color:var(--tx3);font-style:italic;">Unassigned</span>';
+    return '<tr>'
+      +'<td class="tid">'+b.id+'</td>'
+      +'<td class="td-m" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+b.title+'</td>'
+      +'<td>'+(b.project||'—')+'</td>'
+      +'<td>'+pb(b.priority)+'</td>'
+      +'<td>'+sb(b.status)+'</td>'
+      +'<td>'+assigned+'</td>'
+      +'<td style="white-space:nowrap;color:var(--tx3);font-size:11.5px;">'+fmt(b.created_at)+'</td>'
+      +'<td>'+viewBtn+'</td>'
+      +'</tr>';
+  }).join('');
+  return '<table>'
+    +'<thead><tr><th>Bug ID</th><th>Title</th><th>Project</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Submitted</th><th></th></tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'</table>';
+}
+
+// ── DASHBOARD ──
+async function rDash(){
+  var b = await rStats();
+  document.getElementById('recentTbl').innerHTML = tblHTML(b.slice(0,5));
+}
+
+// ── MY BUGS ──
+async function rMyBugs(){
+  var b = await loadMyBugs();
+  document.getElementById('mybugs-sub').textContent = 'All '+b.length+' bugs submitted by '+myName;
+  document.getElementById('myTbl').innerHTML = tblHTML(b);
+}
+
+// ── PROFILE ──
+async function rProfile(){
+  var b = await loadMyBugs();
+  var tot=b.length,op=b.filter(function(x){return x.status==='Open';}).length,
+      pr=b.filter(function(x){return x.status==='In Progress'||x.status==='Testing';}).length,
+      rs=b.filter(function(x){return x.status==='Resolved'||x.status==='Closed';}).length;
+  document.getElementById('profileStats').innerHTML=[
+    ['Total Submitted',tot,'#f59e0b'],['Open',op,'#ef4444'],
+    ['In Progress',pr,'#8b5cf6'],['Resolved',rs,'#10b981']
+  ].map(function(x){
+    return '<div style="background:#fffdf5;border-radius:11px;padding:14px;border:1.5px solid var(--bdr);text-align:center;"><div style="font-family:\'Syne\',sans-serif;font-size:26px;font-weight:800;color:'+x[2]+';">'+x[1]+'</div><div style="font-size:12px;color:var(--tx3);margin-top:4px;">'+x[0]+'</div></div>';
+  }).join('');
+  document.getElementById('actTbl').innerHTML='<table><thead><tr><th>Bug ID</th><th>Title</th><th>Status</th><th>Submitted</th></tr></thead><tbody>'
+    +b.map(function(x){return '<tr><td class="tid">'+x.id+'</td><td class="td-m" style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+x.title+'</td><td>'+sb(x.status)+'</td><td style="font-size:11.5px;color:var(--tx3);">'+fmt(x.created_at)+'</td></tr>';}).join('')
+    +'</tbody></table>';
+  document.getElementById('actFeed').innerHTML=b.slice(0,5).map(function(x){
+    return '<div class="ai"><div class="ai-ico" style="background:#fffbeb;color:#f59e0b;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg></div><div><div class="ai-tx">Submitted <strong>'+x.id+'</strong> — '+(x.title.length>40?x.title.substring(0,40)+'…':x.title)+'</div><div class="ai-time">'+fmt(x.created_at)+'</div></div></div>';
+  }).join('');
+}
+
+// ── SUBMIT BUG ──
+async function submitBug(){
+  var title = document.getElementById('f-title').value.trim();
+  var desc  = document.getElementById('f-desc').value.trim();
+  var proj  = document.getElementById('f-project').value;
+  var prio  = document.getElementById('f-priority').value;
+  if(!title){ toast('Bug Title is required!','error'); return; }
+  if(!desc){  toast('Description is required!','error'); return; }
+  if(!proj){  toast('Please select a Project!','error'); return; }
+  if(!prio){  toast('Please select a Priority!','error'); return; }
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  try {
+    var res = await fetch(API+'/bugs',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+myToken},
+      body: JSON.stringify({
+        title, description:desc, project:proj, priority:prio,
+        environment: document.getElementById('f-env').value,
+        browser: document.getElementById('f-browser').value,
+        steps: document.getElementById('f-steps').value,
+        screenshot: hasScreenshot
+      })
+    });
+    var data = await res.json();
+    if(!res.ok){ toast(data.message||'Error submitting','error'); return; }
+    clearForm();
+    document.getElementById('successId').textContent = data.id;
+    om('successMod');
+    toast('Bug '+data.id+' submitted!','success');
+    rStats();
+  } catch(e){
+    toast('Server error. Please try again.','error');
+  } finally {
+    btn.disabled=false; btn.textContent='Submit Bug Report';
+  }
+}
+
+function clearForm(){
+  ['f-title','f-desc','f-steps','f-browser'].forEach(function(id){document.getElementById(id).value='';});
+  ['f-project','f-priority'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('prevs').innerHTML='';
+  hasScreenshot=false;
+}
+
+// ── UPLOAD ──
+function dragOv(e){e.preventDefault();document.getElementById('upzone').classList.add('drag');}
+function dragOut(){document.getElementById('upzone').classList.remove('drag');}
+function dropFiles(e){e.preventDefault();dragOut();handleFiles(e.dataTransfer.files);}
+function handleFiles(files){
+  Array.from(files).forEach(function(f){
+    if(!f.type.startsWith('image/')) return;
+    hasScreenshot=true;
+    var r=new FileReader();
+    r.onload=function(e){
+      var d=document.createElement('div');d.className='prev';
+      d.innerHTML='<img src="'+e.target.result+'" alt=""><button class="prev-del" onclick="this.parentNode.remove();checkScreenshots()">×</button>';
+      document.getElementById('prevs').appendChild(d);
+    };
+    r.readAsDataURL(f);
+  });
+}
+function checkScreenshots(){ hasScreenshot=document.getElementById('prevs').children.length>0; }
+
+// ── VIEW DETAIL ──
+async function viewDetail(id){
+  currentDetailId = id;
+  try {
+    var b = await apiFetch('/bugs/'+id);
+    document.getElementById('dTitle').textContent = b.id+' — '+b.title;
+    document.getElementById('dBody').innerHTML=
+      '<div class="dr"><div class="drl">Bug ID</div><div class="drv" style="color:var(--ind-d);font-weight:700;font-family:\'DM Mono\',monospace;">'+b.id+'</div></div>'
+      +'<div class="dr"><div class="drl">Project</div><div class="drv">'+(b.project||'—')+'</div></div>'
+      +'<div class="dr"><div class="drl">Priority</div><div class="drv">'+pb(b.priority)+'</div></div>'
+      +'<div class="dr"><div class="drl">Status</div><div class="drv">'+sb(b.status)+'</div></div>'
+      +'<div class="dr"><div class="drl">Assigned To</div><div class="drv">'+(b.assigned_to||'<em style="color:var(--tx3);">Not yet assigned</em>')+'</div></div>'
+      +'<div class="dr"><div class="drl">Submitted</div><div class="drv">'+fmt(b.created_at)+'</div></div>'
+      +'<div class="dr"><div class="drl">Description</div><div class="drv">'+(b.description||'—')+'</div></div>'
+      +(b.steps?'<div class="dr"><div class="drl">Steps</div><div class="drv" style="white-space:pre-line;">'+b.steps+'</div></div>':'')
+      +(b.screenshot?'<div class="ssbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Screenshot attached</div>':'');
+    var c = b.comments||[];
+    document.getElementById('dCmt').innerHTML = c.length
+      ? c.map(function(x){return '<div style="background:#fffdf5;border-radius:8px;padding:8px 11px;margin-bottom:6px;font-size:12.5px;border:1px solid var(--bdr2);"><strong>'+x.author+'</strong><span style="color:var(--tx3);font-size:11px;margin-left:8px;">'+ago(x.created_at)+'</span><div style="color:var(--tx2);margin-top:2px;">'+x.text+'</div></div>';}).join('')
+      : '<div style="color:var(--tx3);font-size:12.5px;">No comments yet.</div>';
+    document.getElementById('cmt-text').value = '';
+    om('detailMod');
+  } catch(e){ toast('Could not load bug.','error'); }
+}
+
+async function addComment(){
+  var txt = document.getElementById('cmt-text').value.trim();
+  if(!txt||!currentDetailId){ toast('Write a comment first.','error'); return; }
+  try {
+    await apiFetch('/bugs/'+currentDetailId+'/comments',{method:'POST',body:JSON.stringify({text:txt})});
+    document.getElementById('cmt-text').value='';
+    await viewDetail(currentDetailId);
+    toast('Comment added!','success');
+  } catch(e){ toast('Error adding comment.','error'); }
+}
+
+// ── SEARCH ──
+document.getElementById('searchInput').addEventListener('input',function(){
+  var q=this.value.trim().toLowerCase();
+  var drop=document.getElementById('searchDropdown');
+  if(!q){drop.classList.remove('open');return;}
+  var results=cachedBugs.filter(function(b){
+    return b.id.toLowerCase().includes(q)||b.title.toLowerCase().includes(q)||(b.project&&b.project.toLowerCase().includes(q));
+  }).slice(0,8);
+  drop.innerHTML = results.length
+    ? results.map(function(b){return '<div class="sd-item" onclick="searchSelect(\''+b.id+'\')">'+'<span class="sd-id">'+b.id+'</span><span class="sd-title">'+b.title+'</span>'+sb(b.status)+'</div>';}).join('')
+    : '<div class="sd-empty">No bugs found for "'+this.value+'"</div>';
+  drop.classList.add('open');
+});
+function searchSelect(id){
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchDropdown').classList.remove('open');
+  viewDetail(id);
+}
+
+// ── NOTIFICATIONS ──
+async function renderNotifs(){
+  try {
+    var notifs = await apiFetch('/notifications');
+    var unread = notifs.filter(function(n){return !n.is_read;}).length;
+    var badge = document.getElementById('ntfBadge');
+    if(unread>0){badge.textContent=unread>9?'9+':unread;badge.classList.add('show');}
+    else badge.classList.remove('show');
+    var list = document.getElementById('ntfList');
+    if(!notifs.length){list.innerHTML='<div class="ntf-empty">No notifications yet.</div>';return;}
+    var typeIcons={
+      resolved:'<div class="ntf-ico" style="background:#ecfdf5;color:#10b981;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>',
+      update:'<div class="ntf-ico" style="background:#fffbeb;color:#d97706;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-3.59"/></svg></div>',
+      assigned:'<div class="ntf-ico" style="background:#eef2ff;color:#4f46e5;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>',
+      comment:'<div class="ntf-ico" style="background:#ede9fe;color:#7c3aed;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>',
+      info:'<div class="ntf-ico" style="background:#fef2f2;color:#ef4444;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg></div>'
+    };
+    list.innerHTML = notifs.map(function(n){
+      var icon = typeIcons[n.type]||typeIcons.info;
+      return '<div class="ntf-item'+(n.is_read?'':' unread')+'" onclick="notifClick(\''+n.bug_id+'\')">'
+        +icon
+        +'<div style="flex:1;"><div class="ntf-txt">'+n.message+'</div><div class="ntf-time">'+ago(n.created_at)+'</div></div>'
+        +(n.is_read?'':'<div class="ntf-dot"></div>')
+        +'</div>';
+    }).join('');
+  } catch(e){}
+}
+function toggleNotifPanel(){
+  var p=document.getElementById('ntfPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')) renderNotifs();
+}
+async function markAllRead(){
+  await apiFetch('/notifications/read',{method:'PUT'});
+  renderNotifs();
+  toast('All notifications marked as read','info');
+}
+function notifClick(bugId){
+  document.getElementById('ntfPanel').classList.remove('open');
+  if(bugId) viewDetail(bugId);
+}
+
+// ── INIT ──
+rDash();
+renderNotifs();
+setInterval(function(){ renderNotifs(); rStats(); }, 5000);
+</script>
+</body>
+</html>
