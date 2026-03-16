@@ -36,6 +36,7 @@ app.get('/developer.html', (req, res) => {
 });
 
 // ── Start Server ──
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`BugTracker server running on port ${PORT}`);
   console.log('RESEND KEY:', process.env.RESEND_API_KEY ? 'LOADED' : 'MISSING');
