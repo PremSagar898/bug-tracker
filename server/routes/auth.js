@@ -2,10 +2,48 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { Resend } = require('resend');
+const https = require('https');
 const supabase = require('../config/db');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// ── Send email via Brevo API ──
+function sendEmail(to, subject, html) {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify({
+      sender: { name: 'BugTracker', email: 'premsagarajmira889@gmail.com' },
+      to: [{ email: to }],
+      subject: subject,
+      htmlContent: html
+    });
+
+    const options = {
+      hostname: 'api.brevo.com',
+      path: '/v3/smtp/email',
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json',
+        'content-length': Buffer.byteLength(data)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let body = '';
+      res.on('data', (chunk) => body += chunk);
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(JSON.parse(body));
+        } else {
+          reject(new Error('Brevo API error: ' + body));
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
 
 function generateOTP(){
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -46,21 +84,18 @@ router.post('/send-otp', async (req, res) => {
 
     if(error) throw error;
 
-    await resend.emails.send({
-      from: 'BugTracker <onboarding@resend.dev>',
-      to: email,
-      subject: 'BugTracker — Your Verification Code',
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#fff;border-radius:16px;border:1.5px solid #e8eaff;">
-          <h2 style="font-size:20px;font-weight:700;color:#111827;margin-bottom:8px;">Verify your email</h2>
-          <p style="font-size:14px;color:#6b7280;margin-bottom:24px;">Hi <strong>${name}</strong>, use this code to verify your BugTracker account.</p>
-          <div style="background:#f4f5fb;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
-            <div style="font-family:'Courier New',monospace;font-size:36px;font-weight:800;letter-spacing:10px;color:#4f46e5;">${otp}</div>
-          </div>
-          <p style="font-size:13px;color:#9ca3af;">This code expires in <strong>10 minutes</strong>.</p>
+    await sendEmail(
+      email,
+      'BugTracker — Your Verification Code',
+      `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#fff;border-radius:16px;border:1.5px solid #e8eaff;">
+        <h2 style="font-size:20px;font-weight:700;color:#111827;margin-bottom:8px;">Verify your email</h2>
+        <p style="font-size:14px;color:#6b7280;margin-bottom:24px;">Hi <strong>${name}</strong>, use this code to verify your BugTracker account.</p>
+        <div style="background:#f4f5fb;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+          <div style="font-family:'Courier New',monospace;font-size:36px;font-weight:800;letter-spacing:10px;color:#4f46e5;">${otp}</div>
         </div>
-      `
-    });
+        <p style="font-size:13px;color:#9ca3af;">This code expires in <strong>10 minutes</strong>.</p>
+      </div>`
+    );
 
     res.json({ message: 'OTP sent successfully.' });
 
@@ -133,23 +168,16 @@ router.post('/verify-otp', async (req, res) => {
       type: 'user'
     });
 
-    // Welcome email
+    // Welcome email (non-critical)
     try {
-      await resend.emails.send({
-        from: 'BugTracker <onboarding@resend.dev>',
-        to: email,
-        subject: 'Welcome to BugTracker!',
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#fff;border-radius:16px;border:1.5px solid #e8eaff;">
-            <h2 style="font-size:20px;font-weight:700;color:#111827;">Welcome, ${user.name}! 🎉</h2>
-            <p style="font-size:14px;color:#6b7280;margin-top:8px;">Your account has been created successfully.</p>
-            <div style="background:#f4f5fb;border-radius:10px;padding:16px;margin:16px 0;font-size:13px;color:#374151;">
-              <div><strong>Role:</strong> ${role.charAt(0).toUpperCase()+role.slice(1)}</div>
-              <div style="margin-top:4px;"><strong>Email:</strong> ${email}</div>
-            </div>
-          </div>
-        `
-      });
+      await sendEmail(
+        email,
+        'Welcome to BugTracker!',
+        `<div style="font-family:Arial,sans-serif;padding:32px;">
+          <h2>Welcome, ${user.name}! 🎉</h2>
+          <p>Your account has been created. Role: <strong>${role}</strong></p>
+        </div>`
+      );
     } catch(e){ console.log('Welcome email skipped:', e.message); }
 
     const token = jwt.sign(
